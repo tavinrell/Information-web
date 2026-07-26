@@ -1,0 +1,2477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Learning Web">
+<meta name="theme-color" content="#0B1030">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>Our Learning Web ✨</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2B3040; --paper:#FFF9EF; --sun:#FFC93C; --spark:#FFE94A;
+    --go:#37B45F; --go-dark:#238746; --sky:#CDEBFF; --boom:#FF7A1A;
+    --car:#E8503A; --car-dark:#C13A28; --blue:#5FA8E8; --fuel:#F5A623;
+    --space1:#0B1030; --space2:#1B2559; --metal:#9AA7B8; --metal-dark:#5E6B7C;
+    --grass:#8ED081;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none;}
+  html,body{margin:0; height:100%;}
+  body{
+    font-family:'Nunito',system-ui,sans-serif; background:var(--space1); color:var(--ink);
+    display:flex; flex-direction:column; overflow:hidden; user-select:none; -webkit-user-select:none;
+    touch-action:manipulation; height:100vh; height:100dvh; overscroll-behavior:none;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  button{font-family:'Baloo 2',cursive;}
+  /* ============ TREE SCREEN ============ */
+  #treeScreen{position:fixed; inset:0; display:flex; flex-direction:column;}
+  #treeCanvas{position:absolute; inset:0; width:100%; height:100%; touch-action:none;}
+  #treeHud{position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; padding:12px 18px; pointer-events:none;}
+  #treeHud h1{
+    font-family:'Baloo 2',cursive; font-weight:800; margin:0; color:#fff;
+    font-size:clamp(19px,3.4vw,30px); text-shadow:0 3px 0 rgba(0,0,0,.35); letter-spacing:.5px;
+  }
+  #treeHud .hudRight{display:flex; gap:10px; align-items:center; pointer-events:auto;}
+  #starCount{
+    font-family:'Baloo 2',cursive; font-weight:800; color:var(--ink); background:var(--spark);
+    border:3px solid var(--ink); border-radius:999px; padding:6px 16px; font-size:clamp(14px,2vw,19px);
+    box-shadow:0 3px 0 var(--ink);
+  }
+  .roundBtn{
+    font-size:20px; background:#fff; border:3px solid var(--ink); border-radius:50%;
+    width:46px; height:46px; cursor:pointer; box-shadow:0 3px 0 var(--ink);
+  }
+  .roundBtn:active{transform:translateY(2px); box-shadow:0 1px 0 var(--ink);}
+  #treeHint{
+    position:absolute; bottom:calc(14px + env(safe-area-inset-bottom)); left:0; right:0; text-align:center; z-index:2; pointer-events:none;
+    font-family:'Baloo 2',cursive; font-weight:800; color:#BFD3FF; font-size:clamp(14px,2vw,19px);
+    text-shadow:0 2px 4px rgba(0,0,0,.5);
+  }
+  #nodeCard{
+    position:absolute; left:50%; transform:translateX(-50%); bottom:calc(52px + env(safe-area-inset-bottom));
+    z-index:3; background:var(--paper); border:4px solid var(--ink); border-radius:20px;
+    padding:12px 18px; max-width:min(92vw,460px); text-align:center; box-shadow:0 6px 0 rgba(0,0,0,.45);
+    display:none;
+  }
+  #nodeCard.show{display:block;}
+  #nodeCard h3{font-family:'Baloo 2',cursive; font-weight:800; margin:0 0 4px; font-size:clamp(17px,2.6vw,23px);}
+  #nodeCard p{margin:0 0 10px; font-weight:700; font-size:clamp(12px,1.8vw,15px); color:#54607a;}
+  #nodeCard .bigBtn{margin:0 4px;}
+  /* ============ SHARED BUTTONS ============ */
+  .bigBtn{
+    font-family:'Baloo 2',cursive; font-weight:800; font-size:clamp(16px,2.4vw,23px);
+    padding:10px 26px; border-radius:999px; border:4px solid var(--ink);
+    background:var(--sun); color:var(--ink); cursor:pointer;
+    box-shadow:0 5px 0 var(--ink); transition:transform .08s;
+  }
+  .bigBtn:active,.bigBtn.held{transform:translateY(4px); box-shadow:0 1px 0 var(--ink);}
+  .bigBtn.go{background:var(--go); color:#fff; text-shadow:0 2px 0 var(--go-dark);}
+  .bigBtn.boom{background:var(--boom); color:#fff; text-shadow:0 2px 0 #b34e00;}
+  .bigBtn.blue{background:var(--blue); color:#fff; text-shadow:0 2px 0 #33689c;}
+  .bigBtn.ghost{background:#fff;}
+  .toggleChip{
+    font-family:'Baloo 2',cursive; font-weight:800; font-size:clamp(14px,2vw,19px);
+    padding:8px 18px; border-radius:999px; border:3px solid var(--ink); background:#fff; cursor:pointer; opacity:.55;
+  }
+  .toggleChip.on{opacity:1; background:var(--spark); box-shadow:0 3px 0 var(--ink);}
+  /* ============ LESSON SCREEN ============ */
+  #lessonScreen{position:fixed; inset:0; display:none; flex-direction:column; background:var(--sky); z-index:10;}
+  #lessonScreen.show{display:flex;}
+  #lessonHeader{display:flex; align-items:center; justify-content:space-between; padding:10px 16px 0; gap:10px;}
+  #lessonHeader h1{
+    font-family:'Baloo 2',cursive; font-weight:800; font-size:clamp(16px,2.8vw,26px);
+    margin:0; color:var(--ink); letter-spacing:.4px; flex:1; text-align:center;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  #lessonMain{flex:1; display:grid; grid-template-rows:1fr auto; min-height:0; padding:6px 14px;}
+  #sceneWrap{min-height:0; display:flex; align-items:center; justify-content:center;}
+  #sceneWrap svg{width:100%; height:100%; max-height:56vh; max-height:56dvh;}
+  #captionArea{text-align:center; padding:2px 10px 6px; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  #kidLine{
+    font-family:'Baloo 2',cursive; font-weight:800; margin:0;
+    font-size:clamp(20px,3.6vw,34px); line-height:1.15;
+  }
+  #closerBox{
+    margin:6px auto 8px; max-width:760px; font-weight:700;
+    font-size:clamp(12px,1.8vw,16px); color:#54607a;
+    background:var(--paper); border-radius:14px; padding:8px 14px; border:2px dashed #d8c9a8;
+  }
+  #closerBox b{color:var(--car-dark);}
+  #controlsRow{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:4px; align-items:center;}
+  #lessonNav{display:flex; align-items:center; justify-content:space-between; padding:8px 18px 14px; gap:12px;}
+  .navBtn{
+    font-family:'Baloo 2',cursive; font-weight:800; font-size:clamp(15px,2.4vw,22px);
+    padding:9px 24px; border-radius:999px; border:4px solid var(--ink);
+    background:#fff; cursor:pointer; box-shadow:0 4px 0 var(--ink); min-width:110px;
+  }
+  .navBtn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--ink);}
+  .navBtn:disabled{opacity:.25; pointer-events:none;}
+  .navBtn.next{background:var(--car); color:#fff;}
+  .navBtn.finish{background:var(--sun);}
+  #stageDots{display:flex; gap:8px;}
+  #stageDots span{width:14px; height:14px; border-radius:50%; background:#fff; border:3px solid var(--ink); transition:.2s;}
+  #stageDots span.on{background:var(--car); transform:scale(1.25);}
+  /* ============ ASK PANEL & HINTS ============ */
+  #askPanel{
+    position:fixed; inset:0; z-index:40; display:none; align-items:flex-end; justify-content:center;
+    background:rgba(11,16,48,.45);
+  }
+  #askPanel.show{display:flex;}
+  #askCard{
+    background:var(--paper); border:4px solid var(--ink); border-radius:24px 24px 0 0; width:min(100vw,720px);
+    padding:16px 20px calc(18px + env(safe-area-inset-bottom)); box-shadow:0 -6px 0 rgba(0,0,0,.35);
+    max-height:70vh; overflow-y:auto; animation:slideUp .3s ease;
+  }
+  @keyframes slideUp{from{transform:translateY(60%)}to{transform:translateY(0)}}
+  #askAnswer{
+    font-weight:700; color:#54607a; background:#fff; border:2px dashed #d8c9a8; border-radius:14px;
+    padding:10px 14px; margin:12px 0; font-size:clamp(14px,2vw,17px); min-height:24px; display:none;
+  }
+  #askAnswer.show{display:block;}
+  #askChips{display:flex; flex-wrap:wrap; gap:10px;}
+  .qaChip{
+    font-family:'Baloo 2',cursive; font-weight:800; font-size:clamp(13px,1.9vw,17px);
+    padding:9px 16px; border-radius:999px; border:3px solid var(--ink); background:var(--spark);
+    cursor:pointer; box-shadow:0 3px 0 var(--ink);
+  }
+  .qaChip:active{transform:translateY(2px); box-shadow:0 1px 0 var(--ink);}
+  #hintHand{
+    position:fixed; z-index:60; font-size:40px; pointer-events:none; display:none;
+    animation:hintBob .9s ease-in-out infinite; filter:drop-shadow(0 3px 4px rgba(0,0,0,.4));
+  }
+  @keyframes hintBob{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-16px) rotate(8deg)}}
+  @keyframes fadeIn{from{opacity:0}}
+  /* ============ CELEBRATION ============ */
+  #celebrate{
+    position:fixed; inset:0; z-index:50; display:none; align-items:center; justify-content:center;
+    background:rgba(11,16,48,.75); backdrop-filter:blur(3px);
+  }
+  #celebrate.show{display:flex;}
+  #celebrateCard{
+    background:var(--paper); border:5px solid var(--ink); border-radius:26px; text-align:center;
+    padding:26px 34px; max-width:min(92vw,480px); box-shadow:0 8px 0 rgba(0,0,0,.5);
+    animation:popIn .4s cubic-bezier(.2,1.6,.4,1);
+  }
+  #celebrateCard .star{font-size:70px; display:block; animation:starSpin 1s ease;}
+  #celebrateCard h2{font-family:'Baloo 2',cursive; font-weight:800; margin:6px 0 4px; font-size:clamp(22px,4vw,32px);}
+  #celebrateCard p{font-weight:700; color:#54607a; margin:0 0 16px;}
+  @keyframes popIn{from{transform:scale(.4); opacity:0} to{transform:scale(1); opacity:1}}
+  @keyframes starSpin{from{transform:scale(0) rotate(-360deg)} to{transform:scale(1) rotate(0)}}
+  .confettiBit{position:fixed; z-index:49; font-size:26px; pointer-events:none; animation:confFall linear forwards;}
+  @keyframes confFall{to{transform:translateY(110vh) rotate(720deg); opacity:.9;}}
+  /* ============ shared anims ============ */
+  @keyframes bounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-26px)}55%{transform:translateY(0)}75%{transform:translateY(-10px)}}
+  .bouncing{animation:bounce .65s ease;}
+  @keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-14deg)}75%{transform:rotate(14deg)}}
+  .wiggling{animation:wiggle .5s ease;}
+  .chip4{
+    display:inline-flex; flex-direction:column; align-items:center; gap:2px;
+    font-family:'Baloo 2',cursive; font-weight:800; font-size:clamp(11px,1.7vw,16px);
+    padding:5px 11px; border-radius:14px; border:3px solid var(--ink); background:#fff; opacity:.4; transition:.15s;
+  }
+  .chip4 .em{font-size:clamp(18px,3vw,28px);}
+  .chip4.lit{opacity:1; background:var(--spark); transform:scale(1.12);}
+  @media (max-width:700px){
+    #sceneWrap svg{max-height:42vh; max-height:42dvh;}
+    .bigBtn{padding:9px 20px; border-width:3px;}
+    .navBtn{min-width:88px; padding:8px 14px; border-width:3px;}
+    #stageDots{gap:6px;} #stageDots span{width:11px; height:11px; border-width:2px;}
+    .roundBtn{width:40px; height:40px; font-size:17px;}
+  }
+  @media (max-height:520px){
+    #sceneWrap svg{max-height:38vh;}
+    #kidLine{font-size:19px;}
+    #closerBox{font-size:11px; padding:4px 10px; margin:3px auto 4px;}
+    .bigBtn{font-size:15px; padding:7px 16px;}
+    .navBtn{font-size:14px; padding:6px 12px; min-width:80px;}
+  }
+  @media (prefers-reduced-motion: reduce){ .bouncing,.wiggling{animation-duration:.01s;} }
+</style>
+</head>
+<body>
+<!-- ================= TREE SCREEN ================= -->
+<div id="treeScreen">
+  <canvas id="treeCanvas"></canvas>
+  <div id="treeHud">
+    <h1>Our Learning Web ✨</h1>
+    <div class="hudRight">
+      <span id="starCount">⭐ 0/12</span>
+      <button class="roundBtn" id="soundBtn" title="Sound on/off">🔊</button>
+    </div>
+  </div>
+  <div id="nodeCard">
+    <h3 id="cardTitle"></h3>
+    <p id="cardDesc"></p>
+    <div id="cardBtns"></div>
+  </div>
+  <div id="treeHint">Drag to float through the web 🌀 · Zoom close to a bubble and it <b>becomes</b> the lesson!</div>
+</div>
+<!-- ================= LESSON SCREEN ================= -->
+<div id="lessonScreen">
+  <div id="lessonHeader">
+    <button class="roundBtn" id="backToTreeBtn" title="Back to the web">🕸️</button>
+    <h1 id="lessonTitle">Lesson</h1>
+    <button class="roundBtn" id="teachBtn" title="Teacher, explain this!">🧑‍🏫</button>
+    <button class="roundBtn" id="askBtn" title="Ask a question">❓</button>
+    <button class="roundBtn" id="soundBtn2" title="Sound on/off">🔊</button>
+  </div>
+  <div id="lessonMain">
+    <div id="sceneWrap"></div>
+    <div id="captionArea">
+      <h2 id="kidLine"></h2>
+      <div id="closerBox"></div>
+      <div id="controlsRow"></div>
+    </div>
+  </div>
+  <div id="lessonNav">
+    <button class="navBtn" id="stageBackBtn">◀ Back</button>
+    <button class="navBtn" id="stageResetBtn" title="Start this page over" style="min-width:0;padding:9px 16px;">↺</button>
+    <div id="stageDots"></div>
+    <button class="navBtn next" id="stageNextBtn">Next ▶</button>
+  </div>
+</div>
+<!-- ================= ASK THE TEACHER ================= -->
+<div id="askPanel">
+  <div id="askCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <h3 style="font-family:'Baloo 2',cursive;font-weight:800;margin:0;font-size:clamp(18px,2.6vw,24px);">🧑‍🏫 Ask the teacher!</h3>
+      <button class="roundBtn" id="askClose" style="width:38px;height:38px;font-size:16px;">✖</button>
+    </div>
+    <div id="askAnswer"></div>
+    <div id="askChips"></div>
+  </div>
+</div>
+<div id="hintHand">👆</div>
+<!-- ================= CELEBRATION ================= -->
+<div id="celebrate">
+  <div id="celebrateCard">
+    <span class="star">⭐</span>
+    <h2 id="celebrateTitle">You did it!</h2>
+    <p id="celebrateDesc">A new star shines on your tree!</p>
+    <div>
+      <button class="bigBtn go" id="celebTreeBtn">🌳 Back to the tree</button>
+      <button class="bigBtn" id="celebNextBtn" style="display:none;">Next ▶</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+"use strict";
+/* ================================================================
+   SOUND
+================================================================ */
+let audioCtx=null, muted=false;
+function syncSoundBtns(){ document.getElementById('soundBtn').textContent = muted?'🔇':'🔊';
+  document.getElementById('soundBtn2').textContent = muted?'🔇':'🔊'; }
+['soundBtn','soundBtn2'].forEach(id=>document.getElementById(id).addEventListener('click',()=>{muted=!muted; syncSoundBtns();}));
+function ctx(){
+  if(!audioCtx){ try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} }
+  if(audioCtx && audioCtx.state==='suspended'){ try{audioCtx.resume();}catch(e){} }
+  return audioCtx;
+}
+document.addEventListener('pointerdown',function unlock(){ ctx(); },{passive:true});
+function tone(freq,dur,type,vol,slideTo){
+  if(muted) return; const c=ctx(); if(!c) return;
+  try{
+    const o=c.createOscillator(), g=c.createGain();
+    o.type=type||'sine'; o.frequency.value=freq;
+    if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,c.currentTime+dur);
+    g.gain.setValueAtTime(vol||0.15,c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+dur);
+  }catch(e){}
+}
+const S={
+  tone:tone,
+  pop:()=>tone(600,.09,'sine',.12,900),
+  ding:()=>{tone(880,.12,'sine',.12); setTimeout(()=>tone(1320,.25,'sine',.12),110);},
+  boom:()=>tone(130,.3,'triangle',.22,45),
+  honk:()=>{tone(440,.18,'square',.1); setTimeout(()=>tone(554,.22,'square',.1),140);},
+  whir:()=>tone(220,.05,'sine',.05),
+  slide:()=>tone(320,.4,'sawtooth',.05,180),
+  tada:()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.28,'triangle',.14),i*130));},
+  woosh:()=>tone(200,.35,'sine',.08,700),
+  thud:()=>tone(90,.15,'triangle',.18,60)
+};
+/* ---------- teacher voice (browser text-to-speech) ---------- */
+function stripHTML(s){ const d=document.createElement('div'); d.innerHTML=s||''; return d.textContent||''; }
+function speak(txt){
+  try{
+    if(muted || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return false;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(txt);
+    u.rate=0.95; u.pitch=1.05;
+    const vs=speechSynthesis.getVoices();
+    const v=vs.find(v=>/en/i.test(v.lang)&&/female|zira|samantha|karen|google us/i.test(v.name))||vs.find(v=>/en/i.test(v.lang));
+    if(v) u.voice=v;
+    speechSynthesis.speak(u);
+    return true;
+  }catch(e){ return false; }
+}
+function hushTeacher(){ try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} }
+/* ================================================================
+   PROGRESS  (localStorage with in-memory fallback)
+================================================================ */
+const PKEY='learningTree.v1';
+let memStore={};
+function loadProgress(){ try{ const s=localStorage.getItem(PKEY); return s?JSON.parse(s):{}; }catch(e){ return memStore; } }
+function saveProgress(p){ try{ localStorage.setItem(PKEY,JSON.stringify(p)); }catch(e){ memStore=p; } }
+let progress=loadProgress();
+function starTotal(){ return Object.keys(progress).filter(k=>progress[k]).length; }
+function updateStarHud(){ document.getElementById('starCount').textContent='⭐ '+starTotal()+'/12'; }
+/* ================================================================
+   TOPIC / CHAPTER DATA
+================================================================ */
+const CHAPTER_DEFS=[
+  {id:'num',   label:'How the Numbers Work', tree:'Numbers', emoji:'🔢'},
+  {id:'graph', label:'On a Graph',           tree:'Graph',   emoji:'📈'},
+  {id:'world', label:'In the Real World',    tree:'Real World', emoji:'🌍'}
+];
+const TOPICS=[
+  {id:'addsub',  label:'Add & Subtract',          short:'Add · Subtract',  emoji:'🍎', color:'#37B45F',
+   desc:'Putting together and taking away — where all of math begins!', pos:[-52,0,28]},
+  {id:'muldiv',  label:'Multiply & Divide',       short:'Multiply · Divide', emoji:'🍪', color:'#5FA8E8',
+   desc:'Adding in big jumps, and sharing things out fairly.', pos:[44,80,-18]},
+  {id:'exproot', label:'Exponents & Square Roots', short:'Powers · Roots', emoji:'🚀', color:'#F5A623',
+   desc:'Numbers that grow super fast — and how to shrink them back.', pos:[-64,160,-30]},
+  {id:'calc',    label:'Derivatives & Integrals', short:'Change · Adding up', emoji:'🎢', color:'#E8503A',
+   desc:'The math of change: how fast things move, and adding tiny pieces.', pos:[52,238,26]}
+];
+const CH_OFFSETS=[[-34,20,16],[2,34,-22],[36,20,16]];
+/* build node list */
+const nodes=[];
+const mathRoot={kind:'root', id:'mathRoot', label:'MATH', emoji:'🌱', color:'#8ED081', pos:[0,-58,8], r:20};
+nodes.push(mathRoot);
+TOPICS.forEach(t=>{
+  const tn={kind:'topic', id:t.id, topic:t, label:t.label, emoji:t.emoji, color:t.color, pos:t.pos, r:17};
+  nodes.push(tn); t.node=tn;
+  t.chNodes=CHAPTER_DEFS.map((c,i)=>{
+    const n={kind:'chapter', id:t.id+'.'+c.id, topic:t, chapter:c, chIndex:i,
+      label:c.tree, emoji:c.emoji, color:t.color,
+      pos:[t.pos[0]+CH_OFFSETS[i][0], t.pos[1]+CH_OFFSETS[i][1], t.pos[2]+CH_OFFSETS[i][2]], r:10};
+    nodes.push(n); return n;
+  });
+});
+const sciRoot={kind:'ghostRoot', id:'sciRoot', label:'SCIENCE · growing soon', emoji:'🔬', color:'#B08BD9', pos:[185,55,-70], r:18};
+nodes.push(sciRoot);
+[['Physics','⚛️',[150,235,-30]],['Chemistry','🧪',[215,140,-85]],['Biology','🌿',[-150,215,-70]]].forEach(g=>{
+  nodes.push({kind:'ghost', id:'g'+g[0], label:g[0], emoji:g[1], color:'#B08BD9', pos:g[2], r:11});
+});
+/* shared-concept bridge nodes: where math and science hold hands */
+const BRIDGES=[
+  {id:'br-growth', label:'Growth', emoji:'🦠', color:'#9BCB3B', pos:[-118,192,-52],
+   topicIdx:2, chIdx:2, ghostId:'gBiology',
+   blurb:'Where exponents meet biology — living things grow by doubling!'},
+  {id:'br-motion', label:'Motion', emoji:'🏎️', color:'#E86FA4', pos:[104,240,-4],
+   topicIdx:3, chIdx:2, ghostId:'gPhysics',
+   blurb:'Where calculus meets physics — speed, distance and change!'}
+];
+BRIDGES.forEach(b=>{
+  const n={kind:'bridge', id:b.id, label:b.label, emoji:b.emoji, color:b.color, pos:b.pos, r:9, bridge:b};
+  nodes.push(n); b.node=n;
+  b.chRef=TOPICS[b.topicIdx].chNodes[b.chIdx];
+});
+const edges=[];
+edges.push([mathRoot, TOPICS[0].node]);
+for(let i=0;i<TOPICS.length-1;i++) edges.push([TOPICS[i].node, TOPICS[i+1].node]);
+TOPICS.forEach(t=>t.chNodes.forEach(c=>edges.push([t.node,c,true])));
+edges.push([sciRoot, nodes.find(n=>n.id==='gPhysics'), true]);
+edges.push([sciRoot, nodes.find(n=>n.id==='gChemistry'), true]);
+edges.push([sciRoot, nodes.find(n=>n.id==='gBiology'), true]);
+/* glowing cross-subject threads */
+BRIDGES.forEach(b=>{
+  edges.push([TOPICS[b.topicIdx].node, b.node, true, 'thread']);
+  edges.push([b.node, nodes.find(n=>n.id===b.ghostId), true, 'thread']);
+});
+/* ================================================================
+   3D TREE RENDERER
+================================================================ */
+const canvas=document.getElementById('treeCanvas');
+const g2=canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  W=canvas.clientWidth; H=canvas.clientHeight;
+  canvas.width=W*DPR; canvas.height=H*DPR;
+  g2.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize',resize);
+const stars=[];
+for(let i=0;i<170;i++) stars.push({x:Math.random(), y:Math.random(), r:Math.random()*1.4+.3, tw:Math.random()*6.28, sp:.5+Math.random()});
+const cam={ yaw:-0.5, pitch:0.22, dist:500, target:[8,100,0] };
+const HOME={target:[8,100,0], dist:500};
+let camAnim=null;
+function flyTo(target,dist,yaw,ms,done){
+  const from={t:[...cam.target], d:cam.dist, y:cam.yaw, p:cam.pitch};
+  const to={t:target, d:dist, y:(yaw===null?cam.yaw:yaw), p:cam.pitch};
+  const t0=performance.now();
+  camAnim={step(now){
+    let u=Math.min(1,(now-t0)/ms); u=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+    cam.target=from.t.map((v,i)=>v+(to.t[i]-v)*u);
+    cam.dist=from.d+(to.d-from.d)*u;
+    cam.yaw=from.y+(to.y-from.y)*u;
+    if(u>=1){ camAnim=null; done&&done(); }
+  }};
+}
+const FOCAL=520;
+function project(p){
+  const cy=Math.cos(cam.yaw), sy=Math.sin(cam.yaw);
+  const cp=Math.cos(cam.pitch), sp=Math.sin(cam.pitch);
+  let x=p[0]-cam.target[0], y=p[1]-cam.target[1], z=p[2]-cam.target[2];
+  let x1=x*cy+z*sy, z1=-x*sy+z*cy;
+  let y2=y*cp-z1*sp, z2=y*sp+z1*cp;
+  const zc=z2+cam.dist;
+  if(zc<40) return null;
+  const s=FOCAL/zc;
+  return {x:W/2+x1*s, y:H*0.56-y2*s, s:s, z:zc};
+}
+let lastInteract=0, treeActive=true, hoverNode=null, selectedNode=null;
+/* proximity auto-open: as a lesson bubble grows on screen, it morphs into its lesson */
+const OPEN_START=50, OPEN_FULL=110;
+let morphP=0, morphNode=null, morphCand=null, reopenBlock=null, morphSounded=false, lastZoomOutT=0;
+function drawTree(now){
+  if(!treeActive) return;
+  const t=now/1000;
+  if(camAnim) camAnim.step(now);
+  else if(now-lastInteract>4000) cam.yaw+=0.0012;
+  g2.clearRect(0,0,W,H);
+  const bg=g2.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0B1030'); bg.addColorStop(.65,'#1B2559'); bg.addColorStop(1,'#2A3A7C');
+  g2.fillStyle=bg; g2.fillRect(0,0,W,H);
+  stars.forEach(st=>{
+    const a=.4+.6*Math.abs(Math.sin(t*st.sp+st.tw));
+    g2.globalAlpha=a; g2.fillStyle='#fff';
+    g2.beginPath(); g2.arc(st.x*W, st.y*H, st.r, 0, 6.28); g2.fill();
+  });
+  g2.globalAlpha=1;
+  /* project all */
+  const proj=new Map();
+  nodes.forEach(n=>proj.set(n, project(n.pos)));
+  /* edges */
+  edges.forEach(e=>{
+    const a=proj.get(e[0]), b=proj.get(e[1]);
+    if(!a||!b) return;
+    const thread=e[3]==='thread';
+    const ghost=!thread&&(e[0].kind==='ghost'||e[0].kind==='ghostRoot'||e[1].kind==='ghost'||e[1].kind==='ghostRoot');
+    if(thread){
+      const tw=.5+.5*Math.sin(t*2.2+a.x*.01);
+      g2.strokeStyle='rgba(255,233,74,'+(.35+.4*tw)+')';
+      g2.lineWidth=2.6*Math.min(a.s,b.s);
+      g2.setLineDash([10,8]);
+      g2.shadowColor='rgba(255,233,74,.9)'; g2.shadowBlur=8;
+    } else {
+      g2.strokeStyle=ghost?'rgba(176,139,217,.3)':(e[2]?'rgba(140,190,255,.4)':'rgba(140,225,170,.65)');
+      g2.lineWidth=(e[2]?2:4)*Math.min(a.s,b.s);
+      g2.shadowColor=ghost?'transparent':'rgba(120,200,255,.8)';
+      g2.shadowBlur=e[2]?4:10;
+    }
+    g2.beginPath();
+    const mx=(a.x+b.x)/2, my=(a.y+b.y)/2-18*Math.min(a.s,b.s);
+    g2.moveTo(a.x,a.y); g2.quadraticCurveTo(mx,my,b.x,b.y); g2.stroke();
+    g2.shadowBlur=0; g2.setLineDash([]);
+  });
+  /* nodes sorted far→near */
+  const order=[...nodes].sort((a,b)=>proj.get(b) && proj.get(a) ? proj.get(b).z-proj.get(a).z : 0);
+  order.forEach(n=>{
+    const p=proj.get(n); if(!p) return;
+    n._sx=p.x; n._sy=p.y; n._sr=n.r*p.s; n._sz=p.z;
+    const ghost=n.kind==='ghost'||n.kind==='ghostRoot';
+    const done=(n.kind==='chapter'&&progress[n.id])||(n.kind==='bridge'&&progress[n.bridge.chRef.id]);
+    const topicDone=n.kind==='topic'&&n.topic.chNodes.every(c=>progress[c.id]);
+    const pulse=1+0.05*Math.sin(t*2.4+n.pos[0]);
+    const r=n._sr*(n===hoverNode||n===selectedNode?1.22:1)*((n.kind==='chapter'||n.kind==='bridge')?pulse:1);
+    g2.globalAlpha=ghost?0.4:1;
+    const grad=g2.createRadialGradient(p.x-r*.3,p.y-r*.35,r*.15,p.x,p.y,r);
+    grad.addColorStop(0,'#ffffff');
+    grad.addColorStop(.35,done||topicDone?'#FFE94A':n.color);
+    grad.addColorStop(1,shade(done||topicDone?'#E8B400':n.color,-30));
+    g2.shadowColor=done||topicDone?'rgba(255,220,60,.9)':n.color;
+    g2.shadowBlur=(n===hoverNode||n===selectedNode)?26:14;
+    g2.fillStyle=grad;
+    g2.beginPath(); g2.arc(p.x,p.y,r,0,6.28); g2.fill();
+    g2.shadowBlur=0;
+    g2.lineWidth=Math.max(1.5,2.5*p.s);
+    g2.strokeStyle='rgba(20,26,60,.85)';
+    g2.stroke();
+    /* emoji */
+    g2.font=(r*1.05)+'px system-ui';
+    g2.textAlign='center'; g2.textBaseline='middle';
+    g2.fillText(done?'⭐':n.emoji, p.x, p.y+r*0.05);
+    /* label */
+    if(r>7){
+      const fs=Math.max(9,Math.min(17,r*0.55));
+      g2.font='800 '+fs+"px 'Baloo 2',cursive";
+      g2.fillStyle=ghost?'rgba(210,190,240,.75)':'#EAF2FF';
+      g2.shadowColor='rgba(0,0,0,.7)'; g2.shadowBlur=4;
+      g2.fillText(n.label, p.x, p.y+r+fs*0.9);
+      g2.shadowBlur=0;
+    }
+    g2.globalAlpha=1;
+  });
+  /* ---- proximity morph: bubble becomes the lesson ---- */
+  let cand=null, candR=0;
+  nodes.forEach(n=>{
+    if(n.kind!=='chapter'&&n.kind!=='bridge') return;
+    if(n._sx===undefined) return;
+    const dC=Math.hypot(n._sx-W/2, n._sy-H*0.5);
+    /* must be near the screen center AND near the focus plane (not a fly-by node between camera and target) */
+    if(dC<Math.min(W,H)*0.25 && n._sz>cam.dist*0.55 && n._sz<cam.dist*1.7 && n._sr>candR){ candR=n._sr; cand=n; }
+  });
+  morphCand=cand;
+  if(reopenBlock && (cand!==reopenBlock || candR<40)) reopenBlock=null;
+  const targetP=(cand && cand!==reopenBlock)? Math.max(0,Math.min(1,(candR-OPEN_START)/(OPEN_FULL-OPEN_START))) : 0;
+  /* past 60%: the bubble gently pulls you the rest of the way in (unless you're actively backing out) */
+  if(targetP>0.6 && targetP<1 && now-lastZoomOutT>450){
+    cam.dist=Math.max(42,cam.dist*0.962);
+    cam.target=cam.target.map((v,i)=>v+(cand.pos[i]-v)*0.12);
+  }
+  morphP+=(targetP-morphP)*0.28;
+  if(morphP>0.03 && cand){
+    morphNode=cand;
+    if(!morphSounded && morphP>0.12){ morphSounded=true; S.woosh(); }
+    const maxR=Math.hypot(W,H);
+    const rr=candR + morphP*morphP*maxR;
+    g2.globalAlpha=Math.min(1,morphP*1.5);
+    g2.fillStyle=cand.color;
+    g2.beginPath(); g2.arc(cand._sx,cand._sy,rr,0,6.28); g2.fill();
+    g2.globalAlpha=Math.min(1,morphP*1.8);
+    g2.font=(candR*(1+morphP*2))+'px system-ui';
+    g2.textAlign='center'; g2.textBaseline='middle';
+    g2.fillText(cand.emoji, cand._sx, cand._sy);
+    g2.globalAlpha=1;
+    if(morphP>=0.94){
+      reopenBlock=cand; morphP=0; morphNode=null; morphSounded=false;
+      cam.dist=Math.max(cam.dist,HOME.dist*0.75);
+      openLesson(cand.kind==='bridge'? cand.bridge.chRef : cand);
+    }
+  } else { morphSounded=false; }
+  requestAnimationFrame(drawTree);
+}
+function shade(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  let r=(n>>16)+amt, g=((n>>8)&255)+amt, b=(n&255)+amt;
+  r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b));
+  return 'rgb('+r+','+g+','+b+')';
+}
+/* ---------- tree input ---------- */
+let dragging=false, dragMoved=false, lastX=0, lastY=0;
+const pointers=new Map();
+let pinchD=0;
+canvas.addEventListener('pointerdown',e=>{
+  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===1){ dragging=true; dragMoved=false; lastX=e.clientX; lastY=e.clientY; }
+  else if(pointers.size===2){
+    const ps=[...pointers.values()];
+    pinchD=Math.hypot(ps[0].x-ps[1].x, ps[0].y-ps[1].y);
+  }
+  lastInteract=performance.now();
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  lastInteract=performance.now();
+  if(pointers.size===2){
+    const ps=[...pointers.values()];
+    const d=Math.hypot(ps[0].x-ps[1].x, ps[0].y-ps[1].y);
+    if(pinchD>0){
+      const nd=cam.dist*pinchD/d;
+      if(nd<cam.dist && morphCand) cam.target=cam.target.map((v,i)=>v+(morphCand.pos[i]-v)*0.10);
+      else if(nd>cam.dist) lastZoomOutT=performance.now();
+      cam.dist=Math.max(42,Math.min(760,nd));
+    }
+    pinchD=d; dragMoved=true;
+    return;
+  }
+  if(!dragging) return;
+  const dx=e.clientX-lastX, dy=e.clientY-lastY;
+  if(Math.abs(dx)+Math.abs(dy)>3) dragMoved=true;
+  cam.yaw+=dx*0.006;
+  cam.pitch=Math.max(-0.25,Math.min(1.15,cam.pitch+dy*0.004));
+  lastX=e.clientX; lastY=e.clientY;
+  /* hover feedback on desktop */
+  hoverNode=hitTest(e.clientX,e.clientY);
+});
+function endPointer(e){
+  pointers.delete(e.pointerId);
+  if(pointers.size<2) pinchD=0;
+  if(pointers.size===0){
+    if(dragging && !dragMoved) handleTap(e.clientX,e.clientY);
+    dragging=false;
+  }
+}
+canvas.addEventListener('pointerup',endPointer);
+canvas.addEventListener('pointercancel',endPointer);
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  if(e.deltaY<0 && morphCand) cam.target=cam.target.map((v,i)=>v+(morphCand.pos[i]-v)*0.10);
+  else if(e.deltaY>0) lastZoomOutT=performance.now();
+  cam.dist=Math.max(42,Math.min(760,cam.dist*Math.exp(e.deltaY*0.0011)));
+  lastInteract=performance.now();
+},{passive:false});
+window.addEventListener('pointermove',e=>{
+  if(e.target===canvas && !dragging) hoverNode=hitTest(e.clientX,e.clientY);
+});
+function hitTest(x,y){
+  let best=null,bd=1e9;
+  nodes.forEach(n=>{
+    if(n.kind==='ghost') return;
+    if(n._sx===undefined) return;
+    const d=Math.hypot(n._sx-x,n._sy-y);
+    if(d<Math.max(24,n._sr+12) && d<bd){ bd=d; best=n; }
+  });
+  return best;
+}
+/* tapping never opens a menu — it just floats you toward the thing you tapped.
+   Getting close is what turns a bubble into its lesson. */
+const treeHintEl=document.getElementById('treeHint');
+let hintFlashT=null;
+function flashHint(msg,ms){
+  treeHintEl.innerHTML=msg;
+  clearTimeout(hintFlashT);
+  hintFlashT=setTimeout(()=>{ treeHintEl.innerHTML='Drag to float through the web 🌀 · Zoom close to a bubble and it <b>becomes</b> the lesson!'; },ms||3500);
+}
+function hideCard(){ selectedNode=null; }
+function handleTap(x,y){
+  const n=hitTest(x,y);
+  if(!n) return;
+  selectedNode=n;
+  S.pop();
+  if(n.kind==='chapter'||n.kind==='bridge'){
+    flashHint('✨ Floating into <b>'+n.label+'</b>…');
+    flyTo(n.pos,58,null,1050);
+  } else if(n.kind==='topic'){
+    flashHint(n.emoji+' <b>'+n.label+'</b> — '+n.topic.desc);
+    speak(n.label+'. '+n.topic.desc+' Float into one of the bubbles around it!');
+    flyTo(n.pos.map((v,i)=>i===1?v+14:v),300,null,800);
+  } else if(n.kind==='root'){
+    flashHint('🌱 The MATH web — everything grows from adding!');
+    flyTo(HOME.target,HOME.dist,null,800);
+  } else {
+    flashHint('🔬 <b>Science</b> is growing soon — see the golden threads already connecting it to math!');
+    speak('Science lessons are growing soon! The golden threads show where math and science already hold hands.');
+  }
+}
+/* ================================================================
+   SVG HELPERS  (shared by all lessons)
+================================================================ */
+const NS='http://www.w3.org/2000/svg';
+function E(tag,attrs,parent){
+  const el=document.createElementNS(NS,tag);
+  if(attrs) for(const k in attrs){
+    if(k==='text') el.textContent=attrs[k];
+    else el.setAttribute(k,attrs[k]);
+  }
+  if(parent) parent.appendChild(el);
+  return el;
+}
+function makeScene(){
+  const wrap=document.getElementById('sceneWrap');
+  wrap.innerHTML='';
+  const svg=E('svg',{viewBox:'0 0 900 480'});
+  wrap.appendChild(svg);
+  return svg;
+}
+/* cartoon graph paper helper */
+function makeGraph(scene,opt){
+  opt=Object.assign({x:150,y:40,w:600,h:380,xmin:0,xmax:10,ymin:0,ymax:10,
+    xstep:1,ystep:1,xlabel:'',ylabel:''},opt||{});
+  const g=E('g',{},scene);
+  E('rect',{x:opt.x-14,y:opt.y-14,width:opt.w+28,height:opt.h+28,rx:18,
+    fill:'#FFFDF4',stroke:'var(--ink)','stroke-width':5},g);
+  const X=v=>opt.x+(v-opt.xmin)/(opt.xmax-opt.xmin)*opt.w;
+  const Y=v=>opt.y+opt.h-(v-opt.ymin)/(opt.ymax-opt.ymin)*opt.h;
+  for(let vx=opt.xmin;vx<=opt.xmax+1e-9;vx+=opt.xstep){
+    E('line',{x1:X(vx),y1:opt.y,x2:X(vx),y2:opt.y+opt.h,stroke:'#E7DFC8','stroke-width':2},g);
+  }
+  for(let vy=opt.ymin;vy<=opt.ymax+1e-9;vy+=opt.ystep){
+    E('line',{x1:opt.x,y1:Y(vy),x2:opt.x+opt.w,y2:Y(vy),stroke:'#E7DFC8','stroke-width':2},g);
+  }
+  const ax=E('g',{stroke:'var(--ink)','stroke-width':4,'stroke-linecap':'round'},g);
+  const y0=Math.max(opt.ymin,Math.min(opt.ymax,0)), x0=Math.max(opt.xmin,Math.min(opt.xmax,0));
+  E('line',{x1:opt.x-6,y1:Y(y0),x2:opt.x+opt.w+6,y2:Y(y0)},ax);
+  E('line',{x1:X(x0),y1:opt.y+opt.h+6,x2:X(x0),y2:opt.y-6},ax);
+  E('path',{d:'M '+(opt.x+opt.w+6)+' '+(Y(y0)-7)+' l 14 7 l -14 7 z',fill:'var(--ink)'},g);
+  E('path',{d:'M '+(X(x0)-7)+' '+(opt.y-6)+' l 7 -14 l 7 14 z',fill:'var(--ink)'},g);
+  if(opt.xlabel) E('text',{x:opt.x+opt.w-4,y:Y(y0)+34,'text-anchor':'end','font-family':"Baloo 2",'font-weight':800,'font-size':19,fill:'#7c6f57',text:opt.xlabel},g);
+  if(opt.ylabel) E('text',{x:X(x0)+10,y:opt.y+6,'font-family':"Baloo 2",'font-weight':800,'font-size':19,fill:'#7c6f57',text:opt.ylabel},g);
+  function numbers(axis,every){
+    every=every||1;
+    if(axis!=='y') for(let vx=Math.ceil(opt.xmin);vx<=opt.xmax;vx+=every){
+      if(Math.abs(vx)>1e-9||opt.ymin<0) E('text',{x:X(vx),y:Y(y0)+24,'text-anchor':'middle','font-family':"Baloo 2",'font-weight':800,'font-size':16,fill:'#9a8d70',text:vx},g);
+    }
+    if(axis!=='x') for(let vy=Math.ceil(opt.ymin);vy<=opt.ymax;vy+=every){
+      if(Math.abs(vy)>1e-9) E('text',{x:X(x0)-10,y:Y(vy)+5,'text-anchor':'end','font-family':"Baloo 2",'font-weight':800,'font-size':16,fill:'#9a8d70',text:vy},g);
+    }
+  }
+  function path(fn,attrs,x1,x2,steps){
+    x1=x1===undefined?opt.xmin:x1; x2=x2===undefined?opt.xmax:x2; steps=steps||120;
+    let d='';
+    for(let i=0;i<=steps;i++){
+      const vx=x1+(x2-x1)*i/steps, vy=fn(vx);
+      const px=X(vx), py=Y(Math.max(opt.ymin-2,Math.min(opt.ymax+2,vy)));
+      d+=(i===0?'M ':'L ')+px.toFixed(1)+' '+py.toFixed(1)+' ';
+    }
+    return E('path',Object.assign({d:d,fill:'none','stroke-width':7,'stroke-linecap':'round'},attrs),g);
+  }
+  return {g:g, X:X, Y:Y, path:path, numbers:numbers, opt:opt};
+}
+/* animate an svg path drawing itself */
+function drawIn(pathEl,ms){
+  try{
+    const L=pathEl.getTotalLength();
+    pathEl.style.strokeDasharray=L;
+    pathEl.style.strokeDashoffset=L;
+    pathEl.getBoundingClientRect();
+    pathEl.style.transition='stroke-dashoffset '+(ms||900)+'ms ease';
+    pathEl.style.strokeDashoffset=0;
+  }catch(e){}
+}
+/* ================================================================
+   LESSON ENGINE
+================================================================ */
+const LESSONS={};   /* topicId -> {chapters:[{stages:[...]}, ...] } */
+function registerLesson(topicId,chapters){ LESSONS[topicId]={chapters:chapters}; }
+let cur={chNode:null, stages:null, idx:0, update:null, cleanups:[]};
+const lessonScreen=document.getElementById('lessonScreen');
+function openLesson(chNode){
+  const L=LESSONS[chNode.topic.id];
+  if(!L){ alert('This lesson is still growing! 🌱'); return; }
+  cur.chNode=chNode;
+  cur.stages=L.chapters[chNode.chIndex].stages;
+  cur.qa=L.chapters[chNode.chIndex].qa||[];
+  cur.idx=0;
+  treeActive=false;
+  lessonScreen.style.animation='fadeIn .4s ease';
+  lessonScreen.classList.add('show');
+  document.getElementById('lessonTitle').textContent=
+    chNode.topic.emoji+' '+chNode.topic.short+' · '+chNode.chapter.emoji+' '+chNode.chapter.label;
+  const dots=document.getElementById('stageDots');
+  dots.innerHTML='';
+  cur.stages.forEach(()=>dots.appendChild(document.createElement('span')));
+  showStage(0);
+}
+function closeLesson(){
+  teardownStage();
+  hushTeacher();
+  document.getElementById('askPanel').classList.remove('show');
+  lessonScreen.classList.remove('show');
+  treeActive=true;
+  hideCard();
+  cam.dist=Math.max(cam.dist,360);   /* float back out so the lesson doesn't instantly re-open */
+  updateStarHud();
+  requestAnimationFrame(drawTree);
+}
+document.getElementById('backToTreeBtn').addEventListener('click',()=>{ S.pop(); closeLesson(); });
+/* zoom OUT from inside a lesson to float back to the web */
+let zoomOutAcc=0, zoLastT=0;
+document.getElementById('lessonMain').addEventListener('wheel',e=>{
+  if(e.deltaY<=0) return;
+  const now=performance.now();
+  if(now-zoLastT>900) zoomOutAcc=0;
+  zoLastT=now; zoomOutAcc+=e.deltaY;
+  if(zoomOutAcc>480){ zoomOutAcc=0; S.woosh(); closeLesson(); }
+},{passive:true});
+const lpinch=new Map(); let lpinchD=0;
+lessonScreen.addEventListener('pointerdown',e=>{ lpinch.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(lpinch.size===2){ const p=[...lpinch.values()]; lpinchD=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); } });
+lessonScreen.addEventListener('pointermove',e=>{
+  if(!lpinch.has(e.pointerId)||lpinch.size!==2) return;
+  lpinch.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  const p=[...lpinch.values()];
+  const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
+  if(lpinchD>0 && d<lpinchD*0.62){ lpinch.clear(); lpinchD=0; S.woosh(); closeLesson(); }
+});
+['pointerup','pointercancel'].forEach(ev=>lessonScreen.addEventListener(ev,e=>{ lpinch.delete(e.pointerId); if(lpinch.size<2) lpinchD=0; }));
+function teardownStage(){
+  cur.update=null;
+  cur.cleanups.forEach(f=>{try{f();}catch(e){}});
+  cur.cleanups=[];
+  document.getElementById('controlsRow').innerHTML='';
+  hushTeacher();
+  disarmHint();
+}
+function showStage(i){
+  teardownStage();
+  cur.idx=Math.max(0,Math.min(cur.stages.length-1,i));
+  const st=cur.stages[cur.idx];
+  [...document.getElementById('stageDots').children].forEach((d,k)=>d.classList.toggle('on',k===cur.idx));
+  document.getElementById('stageBackBtn').disabled=(cur.idx===0);
+  const nextBtn=document.getElementById('stageNextBtn');
+  const isLast=cur.idx===cur.stages.length-1;
+  nextBtn.textContent=isLast?'Finish ⭐':'Next ▶';
+  nextBtn.classList.toggle('finish',isLast);
+  document.getElementById('kidLine').innerHTML=st.kid||'';
+  document.getElementById('closerBox').innerHTML=st.closer?'<b>🔍 Look closer:</b> '+st.closer:'';
+  document.getElementById('closerBox').style.display=st.closer?'':'none';
+  const scene=makeScene();
+  cur.seq=(cur.seq||0)+1;               /* stale timers from a previous stage can't touch this one */
+  const mySeq=cur.seq;
+  const api={
+    E:E, S:S, graph:(o)=>makeGraph(scene,o), drawIn:drawIn,
+    onUpdate(fn){ if(mySeq===cur.seq) cur.update=fn; },
+    onCleanup(fn){ cur.cleanups.push(fn); },
+    setKid(html){ if(mySeq===cur.seq) document.getElementById('kidLine').innerHTML=html; },
+    button(label,cls){
+      const b=document.createElement('button');
+      b.className='bigBtn '+(cls||'');
+      b.innerHTML=label;
+      document.getElementById('controlsRow').appendChild(b);
+      return b;
+    },
+    chipRow(defs){ /* defs:[{id,emoji,label}] returns {lit(id)} */
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;';
+      const map={};
+      defs.forEach(d=>{
+        const c=document.createElement('span');
+        c.className='chip4';
+        c.innerHTML='<span class="em">'+d.emoji+'</span>'+d.label;
+        row.appendChild(c); map[d.id]=c;
+      });
+      document.getElementById('controlsRow').appendChild(row);
+      return {lit(id){ Object.values(map).forEach(c=>c.classList.remove('lit')); if(id&&map[id]) map[id].classList.add('lit'); }};
+    },
+    holdable(btn,onDown,onUp){
+      const down=e=>{e.preventDefault(); btn.classList.add('held'); onDown();};
+      const up=()=>{btn.classList.remove('held'); onUp&&onUp();};
+      btn.addEventListener('pointerdown',down);
+      btn.addEventListener('pointerup',up);
+      btn.addEventListener('pointerleave',up);
+      btn.addEventListener('pointercancel',up);
+    },
+    slider(min,max,val,step){
+      const s=document.createElement('input');
+      s.type='range'; s.min=min; s.max=max; s.value=val; s.step=step||1;
+      s.style.cssText='width:min(46vw,300px);accent-color:var(--car);height:34px;cursor:pointer;';
+      document.getElementById('controlsRow').appendChild(s);
+      return s;
+    }
+  };
+  st.build(scene,api);
+  armHint();
+}
+/* ---------- idle hint: a little hand points at the main control ---------- */
+const hintHand=document.getElementById('hintHand');
+let hintTimer=null;
+function disarmHint(){ clearTimeout(hintTimer); hintHand.style.display='none'; }
+function armHint(){
+  clearTimeout(hintTimer);
+  hintHand.style.display='none';
+  hintTimer=setTimeout(()=>{
+    if(!lessonScreen.classList.contains('show')) return;
+    const ctl=document.querySelector('#controlsRow button.bigBtn, #controlsRow input');
+    if(!ctl) return;
+    const r=ctl.getBoundingClientRect();
+    hintHand.style.left=(r.left+r.width/2-20)+'px';
+    hintHand.style.top=(r.top-48)+'px';
+    hintHand.style.display='block';
+  },5000);
+}
+lessonScreen.addEventListener('pointerdown',()=>{ hintHand.style.display='none'; clearTimeout(hintTimer);
+  hintTimer=setTimeout(()=>{ armHint(); },100); },true);
+/* ---------- reset the current page ---------- */
+document.getElementById('stageResetBtn').addEventListener('click',()=>{ S.pop(); showStage(cur.idx); });
+/* ---------- teacher voice + ask panel ---------- */
+function teacherText(){
+  const st=cur.stages && cur.stages[cur.idx];
+  if(!st) return '';
+  return stripHTML(st.kid)+'. '+stripHTML(st.closer||'');
+}
+const askPanel=document.getElementById('askPanel');
+const askAnswer=document.getElementById('askAnswer');
+function showAnswer(txt){
+  askAnswer.textContent=txt;
+  askAnswer.classList.add('show');
+  speak(txt);
+}
+document.getElementById('teachBtn').addEventListener('click',()=>{
+  S.pop();
+  const txt=teacherText();
+  if(!speak(txt)){ askAnswer.textContent=txt; askAnswer.classList.add('show'); askPanel.classList.add('show'); buildChips(); }
+});
+function buildChips(){
+  const chips=document.getElementById('askChips');
+  chips.innerHTML='';
+  const readMe=document.createElement('button');
+  readMe.className='qaChip'; readMe.textContent='🔊 Read this page to me';
+  readMe.addEventListener('click',()=>showAnswer(teacherText()));
+  chips.appendChild(readMe);
+  (cur.qa||[]).forEach(item=>{
+    const c=document.createElement('button');
+    c.className='qaChip'; c.textContent=item.q;
+    c.addEventListener('click',()=>{ S.pop(); showAnswer(item.a); });
+    chips.appendChild(c);
+  });
+}
+document.getElementById('askBtn').addEventListener('click',()=>{
+  S.pop();
+  askAnswer.classList.remove('show');
+  buildChips();
+  askPanel.classList.add('show');
+});
+document.getElementById('askClose').addEventListener('click',()=>{ askPanel.classList.remove('show'); hushTeacher(); });
+askPanel.addEventListener('click',e=>{ if(e.target===askPanel){ askPanel.classList.remove('show'); hushTeacher(); } });
+document.getElementById('stageBackBtn').addEventListener('click',()=>{ S.pop(); showStage(cur.idx-1); });
+document.getElementById('stageNextBtn').addEventListener('click',()=>{
+  if(cur.idx===cur.stages.length-1){ finishChapter(); }
+  else { S.pop(); showStage(cur.idx+1); }
+});
+/* master lesson update loop */
+let lastT=performance.now();
+function lessonLoop(now){
+  const dt=Math.min(0.05,(now-lastT)/1000); lastT=now;
+  if(cur.update && lessonScreen.classList.contains('show')){
+    try{ cur.update(dt, now); }catch(e){}
+  }
+  requestAnimationFrame(lessonLoop);
+}
+requestAnimationFrame(lessonLoop);
+/* ---------- chapter completion ---------- */
+function confettiBurst(){
+  const ems=['⭐','✨','🎉','🌟','💫'];
+  for(let i=0;i<26;i++){
+    const s=document.createElement('span');
+    s.className='confettiBit';
+    s.textContent=ems[i%ems.length];
+    s.style.left=(5+Math.random()*90)+'vw';
+    s.style.top=(-12-Math.random()*20)+'vh';
+    s.style.animationDuration=(1.6+Math.random()*1.6)+'s';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),3400);
+  }
+}
+function finishChapter(){
+  const n=cur.chNode;
+  const first=!progress[n.id];
+  progress[n.id]=true; saveProgress(progress);
+  S.tada(); confettiBurst();
+  document.getElementById('celebrateTitle').textContent=first?'You earned a star!':'Star polished! ✨';
+  document.getElementById('celebrateDesc').textContent=
+    n.topic.label+' — '+n.chapter.label+' complete! '+(starTotal())+' of 12 stars are shining.';
+  const nextBtn=document.getElementById('celebNextBtn');
+  let nextNode=null;
+  if(n.chIndex<2) nextNode=n.topic.chNodes[n.chIndex+1];
+  else{
+    const ti=TOPICS.indexOf(n.topic);
+    if(ti<TOPICS.length-1) nextNode=TOPICS[ti+1].chNodes[0];
+  }
+  if(nextNode){
+    nextBtn.style.display='';
+    nextBtn.textContent='Next: '+nextNode.chapter.emoji+' '+(nextNode.topic===n.topic?nextNode.chapter.label:nextNode.topic.short);
+    nextBtn.onclick=()=>{ document.getElementById('celebrate').classList.remove('show'); teardownStage(); openLesson(nextNode); };
+  } else nextBtn.style.display='none';
+  document.getElementById('celebrate').classList.add('show');
+}
+document.getElementById('celebTreeBtn').addEventListener('click',()=>{
+  document.getElementById('celebrate').classList.remove('show');
+  closeLesson();
+});
+/* ================================================================
+   LESSON CONTENT
+================================================================ */
+/* ---------------- ADD & SUBTRACT ---------------- */
+(function(){
+const TXT={ 'font-family':'Baloo 2','font-weight':800 };
+function label(scene,x,y,size,fill,str,anchor){
+  return E('text',Object.assign({x:x,y:y,'font-size':size,fill:fill||'var(--ink)','text-anchor':anchor||'middle'},TXT,{text:str}),scene);
+}
+/* ======== CH 1 : HOW THE NUMBERS WORK ======== */
+const A_num=[
+{
+kid:'Adding is <span style="color:var(--go)">putting together!</span>',
+closer:'Two little piles become one big pile. The answer is called the <b>sum</b>. Nothing is lost, nothing is new — the apples just moved together!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'var(--sky)'},scene);
+  E('rect',{y:400,width:900,height:80,fill:'var(--grass)'},scene);
+  const eq=label(scene,450,70,52,'var(--ink)','0 + 0 = 0');
+  label(scene,240,140,26,'#54607a','Red pile');
+  label(scene,660,140,26,'#54607a','Green pile');
+  E('path',{d:'M 150 400 q 90 60 180 0',fill:'#C88A4B',stroke:'var(--ink)','stroke-width':5},scene);
+  E('path',{d:'M 570 400 q 90 60 180 0',fill:'#C88A4B',stroke:'var(--ink)','stroke-width':5},scene);
+  let a=0,b=0,merged=false;
+  const fruits=[];
+  function pilePos(side,i){
+    const cx=side===0?240:660;
+    return [cx+((i%3)-1)*62, 360-Math.floor(i/3)*58];
+  }
+  function updateEq(){ eq.textContent=merged?(a+' + '+b+' = '+(a+b)):(a+' + '+b+' = ?'); }
+  function addFruit(side){
+    if(merged){ return; }
+    if((side===0?a:b)>=6){ S.thud(); return; }
+    const i=side===0?a++:b++;
+    const p=pilePos(side,i);
+    const f=E('text',{x:p[0],y:p[1],'font-size':52,'text-anchor':'middle',text:side===0?'🍎':'🍏'},scene);
+    f.style.transformOrigin=p[0]+'px '+p[1]+'px';
+    f.classList.add('bouncing');
+    fruits.push({el:f,side:side,i:i});
+    S.pop(); updateEq();
+  }
+  const bA=api.button('+ 🍎','ghost'), bB=api.button('+ 🍏','ghost'), bM=api.button('🧺 Put together!','go');
+  bA.addEventListener('click',()=>addFruit(0));
+  bB.addEventListener('click',()=>addFruit(1));
+  bM.addEventListener('click',()=>{
+    if(merged||a+b===0){ if(a+b===0) S.thud(); return; }
+    merged=true; S.woosh();
+    fruits.forEach((f,k)=>{
+      const t=[450+((k%4)-1.5)*60, 360-Math.floor(k/4)*56];
+      const p=pilePos(f.side,f.i);
+      f.el.style.transition='transform .8s cubic-bezier(.3,1.3,.4,1)';
+      f.el.style.transform='translate('+(t[0]-p[0])+'px,'+(t[1]-p[1])+'px)';
+    });
+    setTimeout(()=>{ updateEq(); S.ding();
+      api.setKid(a+' and '+b+' made <span style="color:var(--go)">'+(a+b)+'</span>! That\'s the sum!');
+    },820);
+    setTimeout(()=>{
+      fruits.forEach(f=>{ f.el.style.transition='opacity .5s'; f.el.style.opacity=0; setTimeout(()=>f.el.remove(),520); });
+      fruits.length=0; a=0; b=0; merged=false;
+      updateEq();
+      api.setKid('Munched! 😋 Build two <span style="color:var(--go)">new piles</span> and add again!');
+    },3400);
+    updateEq();
+  });
+}
+},
+{
+kid:'Subtracting is <span style="color:var(--boom)">taking away!</span>',
+closer:'We started with a number, some got taken away (munch!), and what\'s left is called the <b>difference</b>. Subtracting undoes adding.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FFF3E0'},scene);
+  const eq=label(scene,450,70,52,'var(--ink)','8 − 0 = 8');
+  label(scene,450,120,24,'#a06a2c','Tap a cookie to munch it! 🍪');
+  let total=8, eaten=0;
+  const cookies=[];
+  function buildCookies(){
+    cookies.forEach(c=>c.remove()); cookies.length=0;
+    for(let i=0;i<8;i++){
+      const x=190+(i%4)*140, y=230+Math.floor(i/4)*130;
+      const c=E('text',{x:x,y:y,'font-size':84,'text-anchor':'middle',text:'🍪'},scene);
+      c.style.cursor='pointer';
+      c.addEventListener('pointerdown',()=>{
+        if(c._gone) return; c._gone=true;
+        eaten++; S.thud();
+        c.textContent='😋';
+        setTimeout(()=>{ c.textContent='✨'; c.style.transition='opacity .5s'; c.style.opacity=0; },350);
+        eq.textContent='8 − '+eaten+' = '+(8-eaten);
+        api.setKid(eaten<8?'Munch! Now only <span style="color:var(--boom)">'+(8-eaten)+'</span> are left!':'All gone! 8 − 8 = <span style="color:var(--boom)">0</span>. Zero means none!');
+        if(eaten===8) S.ding();
+      });
+      cookies.push(c);
+    }
+  }
+  buildCookies();
+  const rb=api.button('🔄 Bake more cookies!','ghost');
+  rb.addEventListener('click',()=>{ eaten=0; eq.textContent='8 − 0 = 8'; S.pop();
+    api.setKid('Subtracting is <span style="color:var(--boom)">taking away!</span>'); buildCookies(); });
+}
+},
+{
+kid:'Hop right to add, hop left to subtract!',
+closer:'The <b>number line</b> puts every number in order on a road. Adding moves you right, subtracting moves you left. Adding and subtracting are opposite hops!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'var(--sky)'},scene);
+  E('rect',{y:330,width:900,height:150,fill:'var(--grass)'},scene);
+  E('line',{x1:60,y1:330,x2:840,y2:330,stroke:'var(--ink)','stroke-width':6,'stroke-linecap':'round'},scene);
+  for(let i=0;i<=10;i++){
+    const x=60+i*78;
+    E('line',{x1:x,y1:318,x2:x,y2:342,stroke:'var(--ink)','stroke-width':5},scene);
+    label(scene,x,378,26,'#2c5c38',i);
+  }
+  const eq=label(scene,450,70,50,'var(--ink)','5');
+  const frog=E('text',{x:60+5*78,y:305,'font-size':64,'text-anchor':'middle',text:'🐸'},scene);
+  let pos=5, anim=null;
+  function hop(d){
+    if(anim) return;
+    const np=pos+d;
+    if(np<0||np>10){ S.thud(); frog.classList.remove('wiggling'); void frog.getBBox(); frog.classList.add('wiggling'); return; }
+    const x0=60+pos*78, x1=60+np*78, t0=performance.now();
+    eq.textContent=pos+(d>0?' + 1 = ':' − 1 = ')+np;
+    api.setKid(d>0?'Hop <span style="color:var(--go)">RIGHT</span>! '+pos+' + 1 = '+np:'Hop <span style="color:var(--boom)">LEFT</span>! '+pos+' − 1 = '+np);
+    pos=np; S.pop();
+    anim={x0:x0,x1:x1,t0:t0};
+    api.onUpdate(()=>{
+      if(!anim) return;
+      const u=Math.min(1,(performance.now()-anim.t0)/380);
+      const x=anim.x0+(anim.x1-anim.x0)*u;
+      frog.setAttribute('x',x);
+      frog.setAttribute('y',305-Math.sin(u*Math.PI)*70);
+      if(u>=1){ anim=null; }
+    });
+  }
+  const bl=api.button('◀ − 1 hop','boom'), br=api.button('+ 1 hop ▶','go');
+  bl.addEventListener('click',()=>hop(-1));
+  br.addEventListener('click',()=>hop(1));
+}
+},
+{
+kid:'⭐ CHALLENGE! Hop the frog to the star!',
+closer:'This is what an equation feels like: you can SEE where you need to end up, and you work out which moves get you there. 4 + ? = 9 is just "how many hops?"',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'var(--sky)'},scene);
+  E('rect',{y:330,width:900,height:150,fill:'var(--grass)'},scene);
+  E('line',{x1:60,y1:330,x2:840,y2:330,stroke:'var(--ink)','stroke-width':6,'stroke-linecap':'round'},scene);
+  for(let i=0;i<=10;i++){
+    const x=60+i*78;
+    E('line',{x1:x,y1:318,x2:x,y2:342,stroke:'var(--ink)','stroke-width':5},scene);
+    label(scene,x,378,26,'#2c5c38',i);
+  }
+  const eq=label(scene,450,70,44,'var(--ink)','');
+  const scoreT=label(scene,780,70,30,'#b8860b','⭐ 0');
+  const star=E('text',{x:0,y:250,'font-size':52,'text-anchor':'middle',text:'⭐'},scene);
+  const frog=E('text',{x:0,y:305,'font-size':64,'text-anchor':'middle',text:'🐸'},scene);
+  let pos=0,target=0,anim=null,score=0,hops=0;
+  function newRound(){
+    pos=Math.floor(Math.random()*11);
+    do{ target=Math.floor(Math.random()*11); }while(Math.abs(target-pos)<2||Math.abs(target-pos)>6);
+    hops=0;
+    frog.setAttribute('x',60+pos*78); frog.setAttribute('y',305);
+    star.setAttribute('x',60+target*78);
+    eq.textContent=pos+' + ? = '+target;
+    api.setKid('Get from <b>'+pos+'</b> to the ⭐ on <b>'+target+'</b>!');
+  }
+  newRound();
+  function hop(d){
+    if(anim) return;
+    const np=pos+d;
+    if(np<0||np>10){ S.thud(); return; }
+    const x0=60+pos*78, x1=60+np*78, t0=performance.now();
+    pos=np; hops++; S.pop();
+    anim={x0:x0,x1:x1,t0:t0};
+    api.onUpdate(()=>{
+      if(!anim) return;
+      const u=Math.min(1,(performance.now()-anim.t0)/380);
+      frog.setAttribute('x',anim.x0+(anim.x1-anim.x0)*u);
+      frog.setAttribute('y',305-Math.sin(u*Math.PI)*70);
+      if(u>=1){
+        anim=null;
+        if(pos===target){
+          score++; scoreT.textContent='⭐ '+score; S.tada();
+          api.setKid('YES! You solved it in '+hops+' hops! 🎉 Here comes another…');
+          setTimeout(newRound,1700);
+        } else {
+          eq.textContent=pos+(target>pos?' + ? = ':' − ? = ')+target;
+        }
+      }
+    });
+  }
+  const bl=api.button('◀ − 1','boom'), br=api.button('+ 1 ▶','go');
+  bl.addEventListener('click',()=>hop(-1));
+  br.addEventListener('click',()=>hop(1));
+}
+}];
+/* ======== CH 2 : ON A GRAPH ======== */
+const A_graph=[
+{
+kid:'Numbers can be pictures — <span style="color:var(--blue)">bars!</span>',
+closer:'A <b>bar graph</b> turns a number into a tower of blocks: bigger number = taller tower. Stack two towers and the new height is the sum!',
+build(scene,api){
+  const G=api.graph({x:200,y:40,w:500,h:380,xmin:0,xmax:5,ymin:0,ymax:10,ylabel:'how many'});
+  G.numbers('y');
+  let a=3,b=2,stacked=false;
+  const barsG=E('g',{},scene);
+  function draw(){
+    barsG.innerHTML='';
+    const bw=70;
+    function tower(cx,count,color,fromY){
+      for(let i=0;i<count;i++){
+        E('rect',{x:G.X(cx)-bw/2,y:G.Y(fromY+i+1),width:bw,height:G.Y(0)-G.Y(1)-4,rx:8,
+          fill:color,stroke:'var(--ink)','stroke-width':4},barsG);
+      }
+    }
+    if(!stacked){
+      tower(1.5,a,'var(--car)',0); tower(3.5,b,'var(--blue)',0);
+      label(barsG,G.X(1.5),G.Y(a)-14,34,'var(--car-dark)',a);
+      label(barsG,G.X(3.5),G.Y(b)-14,34,'#33689c',b);
+    } else {
+      tower(2.5,a,'var(--car)',0); tower(2.5,b,'var(--blue)',a);
+      label(barsG,G.X(2.5),G.Y(a+b)-14,38,'var(--go-dark)',a+' + '+b+' = '+(a+b));
+    }
+  }
+  draw();
+  const ba=api.button('+ 🔴','ghost'), bb=api.button('+ 🔵','ghost'), bs=api.button('🏗️ Stack them!','go');
+  ba.addEventListener('click',()=>{ if(stacked||a>=5){S.thud();return;} a++; S.pop(); draw(); });
+  bb.addEventListener('click',()=>{ if(stacked||b>=5){S.thud();return;} b++; S.pop(); draw(); });
+  bs.addEventListener('click',()=>{
+    if(stacked) return; stacked=true; S.woosh(); draw(); S.ding();
+    api.setKid('Stacked! The tower is <span style="color:var(--go)">'+(a+b)+'</span> tall — that\'s adding!');
+  });
+}
+},
+{
+kid:'The <span style="color:var(--fuel)">+3 machine</span> makes a dot for every number!',
+closer:'Feed the machine a number <b>x</b>, it adds 3 and gives back <b>y</b>. Each pair (x, y) becomes a dot on the graph. Watch what shape the dots make…',
+build(scene,api){
+  const G=api.graph({x:260,y:40,w:460,h:380,xmin:0,xmax:8,ymin:0,ymax:11,xlabel:'x in',ylabel:'y out'});
+  G.numbers();
+  /* machine */
+  E('rect',{x:30,y:150,width:170,height:150,rx:20,fill:'var(--fuel)',stroke:'var(--ink)','stroke-width':6},scene);
+  label(scene,115,235,54,'#7a4c00','+3');
+  label(scene,115,130,22,'#a06a2c','the add machine');
+  const inTxt=label(scene,115,190,30,'#7a4c00','x = ?');
+  const dots=[]; let lineDrawn=false;
+  const sl=api.slider(0,8,2);
+  const feed=api.button('🍬 Drop it in!','go');
+  const slLbl=api.button('x = 2','ghost'); slLbl.style.pointerEvents='none';
+  sl.addEventListener('input',()=>{ slLbl.textContent='x = '+sl.value; inTxt.textContent='x = '+sl.value; });
+  feed.addEventListener('click',()=>{
+    const x=+sl.value, y=x+3;
+    if(dots.some(d=>d.x===x)){ S.thud(); api.setKid('Already dropped '+x+' in! Try a different number.'); return; }
+    S.pop();
+    const dot=E('circle',{cx:G.X(x),cy:G.Y(y),r:0,fill:'var(--car)',stroke:'var(--ink)','stroke-width':4},scene);
+    dot.style.transition='r .4s'; setTimeout(()=>dot.setAttribute('r',11),30);
+    label(scene,G.X(x),G.Y(y)-20,20,'var(--car-dark)',x+'+3='+y);
+    dots.push({x:x,y:y});
+    api.setKid(x+' went in… <span style="color:var(--fuel)">'+y+'</span> came out! ('+dots.length+' dot'+(dots.length>1?'s':'')+')');
+    if(dots.length>=3&&!lineDrawn){
+      lineDrawn=true;
+      setTimeout(()=>{
+        const p=G.path(v=>v+3,{stroke:'var(--go)','stroke-width':6,'stroke-dasharray':'2 0'});
+        api.drawIn(p,1100); S.ding();
+        api.setKid('Look! The dots make a perfectly <span style="color:var(--go)">straight line!</span>');
+      },600);
+    }
+  });
+}
+},
+{
+kid:'Adding lifts the line <span style="color:var(--go)">UP</span> — subtracting sinks it down!',
+closer:'The line <b>y = x + b</b> is the whole add-machine drawn at once. Change <b>b</b> and the entire line slides up or down — every answer changes by the same amount.',
+build(scene,api){
+  const G=api.graph({x:230,y:40,w:520,h:380,xmin:0,xmax:8,ymin:-4,ymax:10,xlabel:'x',ylabel:'y'});
+  G.numbers(null,2);
+  const base=G.path(v=>v,{stroke:'#b9c4d6','stroke-width':5,'stroke-dasharray':'10 10'});
+  label(scene,G.X(7.2),G.Y(7.2)-16,20,'#8895ab','y = x');
+  let b=3;
+  let line=G.path(v=>v+b,{stroke:'var(--go)'});
+  const tag=label(scene,G.X(4),G.Y(7)-18,30,'var(--go-dark)','y = x + 3');
+  const sl=api.slider(-4,5,3);
+  const lbl=api.button('b = +3','ghost'); lbl.style.pointerEvents='none';
+  sl.addEventListener('input',()=>{
+    b=+sl.value;
+    line.remove();
+    line=G.path(v=>v+b,{stroke:b>=0?'var(--go)':'var(--boom)'});
+    const str=b>=0?'y = x + '+b:'y = x − '+(-b);
+    tag.textContent=str;
+    tag.setAttribute('y',G.Y(Math.max(-3.4,Math.min(9,4+b)))-18);
+    tag.setAttribute('fill',b>=0?'var(--go-dark)':'#b34e00');
+    lbl.textContent='b = '+(b>=0?'+':'')+b;
+    api.setKid(b>0?'+ '+b+' lifts every point UP by '+b+'!':(b<0?'− '+(-b)+' sinks every point DOWN by '+(-b)+'!':'b = 0 — right back to the plain line!'));
+    S.whir();
+  });
+}
+}];
+/* ======== CH 3 : REAL WORLD ======== */
+const A_world=[
+{
+kid:'Your piggy bank adds and subtracts all day!',
+closer:'Money in = <b>adding</b>. Money out = <b>subtracting</b>. The piggy bank always shows the running total. You can\'t spend coins you don\'t have — that\'s why the piggy says no!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FDEBF2'},scene);
+  const pig=E('text',{x:450,y:300,'font-size':160,'text-anchor':'middle',text:'🐷'},scene);
+  pig.style.transformOrigin='450px 260px';
+  const eqT=label(scene,450,70,46,'var(--ink)','5 coins');
+  const msg=label(scene,450,410,26,'#a05a78','Do chores to earn, buy stickers to spend!');
+  let coins=5;
+  const coinG=E('g',{},scene);
+  function drawCoins(){
+    coinG.innerHTML='';
+    for(let i=0;i<coins;i++){
+      E('text',{x:170+(i%10)*62,y:460,'font-size':40,'text-anchor':'middle',text:'🪙'},coinG);
+    }
+  }
+  drawCoins();
+  const earn=api.button('🧹 Chore +2','go'), spend=api.button('✨ Sticker −3','boom');
+  earn.addEventListener('click',()=>{
+    eqT.textContent=coins+' + 2 = '+(coins+2)+' coins';
+    coins+=2; drawCoins(); S.ding();
+    msg.textContent='You earned 2 coins! Adding!';
+    pig.classList.remove('bouncing'); void pig.getBBox(); pig.classList.add('bouncing');
+  });
+  spend.addEventListener('click',()=>{
+    if(coins<3){
+      S.thud(); msg.textContent='Uh oh — '+coins+' − 3 can\'t happen, not enough coins!';
+      pig.classList.remove('wiggling'); void pig.getBBox(); pig.classList.add('wiggling');
+      api.setKid('Not enough! You need <span style="color:var(--boom)">3</span> coins first.');
+      return;
+    }
+    eqT.textContent=coins+' − 3 = '+(coins-3)+' coins';
+    coins-=3; drawCoins(); S.pop();
+    msg.textContent='Sticker bought! Subtracting!';
+  });
+}
+},
+{
+kid:'The bathtub is a big adding machine!',
+closer:'The faucet <b>adds</b> water, the drain <b>subtracts</b> it. The water level is the running total of everything that flowed in and out. (Remember this tub — it comes back when we learn integrals!)',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#E8F6FF'},scene);
+  E('rect',{x:200,y:120,width:500,height:300,rx:34,fill:'#fff',stroke:'var(--ink)','stroke-width':7},scene);
+  const clip=E('clipPath',{id:'tubClip'},scene);
+  E('rect',{x:207,y:127,width:486,height:286,rx:28},clip);
+  const water=E('rect',{x:207,y:413,width:486,height:0,fill:'#7EC8F0','clip-path':'url(#tubClip)'},scene);
+  const duck=E('text',{x:450,y:410,'font-size':46,'text-anchor':'middle',text:'🦆'},scene);
+  E('rect',{x:640,y:60,width:16,height:70,fill:'var(--metal)',stroke:'var(--ink)','stroke-width':4},scene);
+  E('rect',{x:600,y:50,width:96,height:26,rx:10,fill:'var(--metal)',stroke:'var(--ink)','stroke-width':4},scene);
+  const stream=E('rect',{x:642,y:130,width:12,height:0,fill:'#7EC8F0'},scene);
+  const lvl=label(scene,450,90,40,'var(--ink)','0 buckets');
+  let level=0, tap=false, drain=false;
+  const tapBtn=api.button('🚰 Hold: water ON','go'), drBtn=api.button('🕳️ Hold: pull plug','boom');
+  api.holdable(tapBtn,()=>{tap=true;},()=>{tap=false;});
+  api.holdable(drBtn,()=>{drain=true;},()=>{drain=false;});
+  let tick=0;
+  api.onUpdate((dt)=>{
+    const rate=(tap?3.2:0)-(drain?3.2:0);
+    const old=Math.round(level);
+    level=Math.max(0,Math.min(10,level+rate*dt));
+    if(Math.round(level)!==old){ S.pop(); }
+    const h=level/10*286;
+    water.setAttribute('y',413-h); water.setAttribute('height',h);
+    duck.setAttribute('y',408-h);
+    stream.setAttribute('height',tap?283:0);
+    lvl.textContent=Math.round(level*10)/10+' buckets';
+    tick+=dt;
+    if(tick>0.6){
+      tick=0;
+      if(tap&&!drain) api.setKid('Water IN — the total goes <span style="color:var(--go)">up up up!</span>');
+      else if(drain&&!tap) api.setKid('Water OUT — subtracting it back <span style="color:var(--boom)">down!</span>');
+      else if(tap&&drain) api.setKid('In AND out at once — they cancel! +3 − 3 = 0');
+    }
+  });
+}
+},
+{
+kid:'Who\'s winning? Subtraction tells you <span style="color:var(--car)">by how much!</span>',
+closer:'Subtraction isn\'t only "taking away" — it also <b>compares</b>. Line up both scores and the extra blocks are the difference: 7 − 4 = 3 means Red leads by 3.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#1B2559'},scene);
+  label(scene,450,60,40,'#fff','🏀 THE BIG GAME 🏀');
+  const rScore=label(scene,280,130,60,'#FF8A7A','0');
+  const bScore=label(scene,620,130,60,'#8FC7FF','0');
+  label(scene,280,170,24,'#FF8A7A','TEAM RED');
+  label(scene,620,170,24,'#8FC7FF','TEAM BLUE');
+  const diffT=label(scene,450,455,32,'#FFE94A','Tied! 0 − 0 = 0');
+  const blocksG=E('g',{},scene);
+  let r=0,b=0;
+  function draw(){
+    blocksG.innerHTML='';
+    for(let i=0;i<r;i++) E('rect',{x:250,y:400-i*24,width:60,height:20,rx:5,fill:'var(--car)',stroke:'#fff','stroke-width':2},blocksG);
+    for(let i=0;i<b;i++) E('rect',{x:590,y:400-i*24,width:60,height:20,rx:5,fill:'var(--blue)',stroke:'#fff','stroke-width':2},blocksG);
+    const hi=Math.max(r,b), lo=Math.min(r,b);
+    if(hi>lo){
+      const x=r>b?250:590;
+      E('rect',{x:x-8,y:400-(hi-1)*24-4,width:76,height:(hi-lo)*24+4,rx:8,fill:'none',stroke:'#FFE94A','stroke-width':4,'stroke-dasharray':'8 6'},blocksG);
+    }
+    rScore.textContent=r; bScore.textContent=b;
+    if(r===b){ diffT.textContent='Tied! '+r+' − '+b+' = 0'; }
+    else{
+      const lead=r>b?'Red':'Blue';
+      diffT.textContent=(r>b?r+' − '+b:b+' − '+r)+' = '+Math.abs(r-b)+' → '+lead+' leads by '+Math.abs(r-b)+'!';
+    }
+  }
+  draw();
+  const rb=api.button('🔴 Red scores!',''), bb=api.button('🔵 Blue scores!','blue');
+  rb.addEventListener('click',()=>{ if(r>=12){S.thud();return;} r++; S.pop(); draw();
+    api.setKid('Red scores! The <span style="color:var(--car)">difference</span> is '+Math.abs(r-b)+'.'); });
+  bb.addEventListener('click',()=>{ if(b>=12){S.thud();return;} b++; S.pop(); draw();
+    api.setKid('Blue scores! The <span style="color:var(--blue)">difference</span> is '+Math.abs(r-b)+'.'); });
+}
+}];
+registerLesson('addsub',[
+{stages:A_num, qa:[
+  {q:'Why is the answer called a "sum"?', a:'Sum is just the math word for the total you get when you put groups together. Three apples plus two apples: the sum is five. Nothing magical was added — the apples only moved into one pile.'},
+  {q:'What happens if I add zero?', a:'Adding zero changes nothing at all! Zero means "none", so putting none more into your pile leaves it exactly the same. Five plus zero is still five.'},
+  {q:'Can I take away MORE than I have?', a:'With real cookies, no — once they are gone, they are gone! But math has a trick for it called negative numbers. They keep counting below zero, like floors in a basement under a building. You will meet them on the number line: just keep hopping left past zero!'}
+]},
+{stages:A_graph, qa:[
+  {q:'Why do the dots make a straight line?', a:'Because the machine adds the SAME amount to every number. Every step to the right climbs exactly one step up — even steps always make a straight path, never a curve.'},
+  {q:'What are x and y?', a:'x is the number you put IN, and y is the number that comes OUT. Every in-and-out pair becomes one dot on the graph: across for x, up for y.'},
+  {q:'What does sliding the line up mean?', a:'It means every single answer grew by the same amount at once. Add three, and every point on the whole line lifts up by three — the line keeps its exact tilt, it just rides the elevator.'}
+]},
+{stages:A_world, qa:[
+  {q:'Where else do we add and subtract?', a:'Everywhere! Game scores, money, temperature going up and down, minutes left before bedtime, people getting on and off a bus. Any time something comes in or goes out, you are adding or subtracting.'},
+  {q:'Why did the piggy bank say no?', a:'Because you cannot hand over coins you do not have! Grown-ups call going below zero "debt" — the bank remembers you owe them. The piggy keeps it simple: no coins, no stickers.'},
+  {q:'What is a running total?', a:'A number that keeps updating as things flow in and out — like the water level in the bathtub. Every splash in adds, every glug out subtracts, and the level always shows where you stand right now.'}
+]}]);
+})();
+/* ---------------- MULTIPLY & DIVIDE ---------------- */
+(function(){
+const TXT={ 'font-family':'Baloo 2','font-weight':800 };
+function label(scene,x,y,size,fill,str,anchor){
+  return E('text',Object.assign({x:x,y:y,'font-size':size,fill:fill||'var(--ink)','text-anchor':anchor||'middle'},TXT,{text:str}),scene);
+}
+/* ======== CH 1 : NUMBERS ======== */
+const M_num=[
+{
+kid:'Multiplying is adding in <span style="color:var(--blue)">big jumps!</span>',
+closer:'Each tray holds exactly 4 cookies. 3 trays means 4 + 4 + 4 — but it\'s faster to say <b>3 × 4</b>. Multiplying is just super-speedy repeated adding!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FFF3E0'},scene);
+  const eq=label(scene,450,66,46,'var(--ink)','0 trays = 0 cookies');
+  const sub=label(scene,450,110,26,'#a06a2c','');
+  const traysG=E('g',{},scene);
+  let trays=0;
+  function draw(){
+    traysG.innerHTML='';
+    for(let t=0;t<trays;t++){
+      const ty=150+t*80;
+      E('rect',{x:230,y:ty,width:440,height:64,rx:14,fill:'#C88A4B',stroke:'var(--ink)','stroke-width':4},traysG);
+      for(let c=0;c<4;c++)
+        E('text',{x:300+c*100,y:ty+46,'font-size':42,'text-anchor':'middle',text:'🍪'},traysG);
+    }
+    eq.textContent=trays+' × 4 = '+(trays*4)+' cookies';
+    sub.textContent=trays>0?('that\'s '+Array(trays).fill('4').join(' + ')+' = '+(trays*4)):'';
+  }
+  draw(); eq.textContent='0 trays… bake some!';
+  const add=api.button('🍪 + 1 tray of 4','go'), reset=api.button('🔄','ghost');
+  add.addEventListener('click',()=>{
+    if(trays>=4){ S.thud(); return; }
+    trays++; S.pop(); draw();
+    api.setKid(trays+' trays of 4 — that\'s <span style="color:var(--blue)">'+(trays*4)+'</span> cookies in one big jump!');
+  });
+  reset.addEventListener('click',()=>{ trays=0; S.pop(); draw(); eq.textContent='0 trays… bake some!';
+    api.setKid('Multiplying is adding in <span style="color:var(--blue)">big jumps!</span>'); });
+}
+},
+{
+kid:'Rows × columns — and you can <span style="color:var(--fuel)">flip it!</span>',
+closer:'Stars in a rectangle: 3 rows of 5 is 15… and 5 rows of 3 is ALSO 15! Flipping the rectangle never changes how many stars there are. That\'s why <b>a × b = b × a</b>, always.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#243B6B'},scene);
+  const eq=label(scene,450,60,46,'#fff','3 × 5 = 15');
+  const gridG=E('g',{},scene);
+  gridG.style.transformOrigin='450px 270px';
+  gridG.style.transition='transform .7s cubic-bezier(.3,1.3,.4,1)';
+  let rows=3, cols=5, flipped=false;
+  function draw(){
+    gridG.innerHTML='';
+    const cw=64;
+    const ox=450-(cols*cw)/2+cw/2, oy=270-(rows*cw)/2+cw/2;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)
+      E('text',{x:ox+c*cw,y:oy+r*cw+14,'font-size':44,'text-anchor':'middle',text:'⭐'},gridG);
+    eq.textContent=rows+' × '+cols+' = '+(rows*cols);
+  }
+  draw();
+  const br=api.button('+ row','ghost'), bc=api.button('+ column','ghost'), bf=api.button('🔄 Flip it!','go');
+  br.addEventListener('click',()=>{ if(rows>=5){S.thud();return;} rows++; S.pop(); draw(); });
+  bc.addEventListener('click',()=>{ if(cols>=8){S.thud();return;} cols++; S.pop(); draw(); });
+  bf.addEventListener('click',()=>{
+    S.woosh();
+    flipped=!flipped;
+    gridG.style.transform='rotate('+(flipped?90:0)+'deg)';
+    setTimeout(()=>{
+      const t=rows; rows=cols; cols=t;
+      gridG.style.transition='none'; gridG.style.transform='rotate(0deg)';
+      draw();
+      setTimeout(()=>{ gridG.style.transition='transform .7s cubic-bezier(.3,1.3,.4,1)'; },30);
+      api.setKid('Flipped! Still <span style="color:var(--fuel)">'+(rows*cols)+'</span> stars — '+cols+' × '+rows+' = '+rows+' × '+cols+'!');
+      S.ding();
+    },720);
+  });
+}
+},
+{
+kid:'Dividing is <span style="color:var(--go)">sharing fairly!</span>',
+closer:'12 strawberries shared between friends: dividing asks "how many does <b>each one</b> get?" Sometimes it\'s perfectly even… and sometimes there are <b>leftovers</b> (the remainder — chef\'s treat!).',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FDEBF2'},scene);
+  const eq=label(scene,450,60,44,'var(--ink)','12 strawberries to share');
+  const berryG=E('g',{},scene);
+  const plateG=E('g',{},scene);
+  let friends=0, busy=false;
+  function reset(){
+    berryG.innerHTML=''; plateG.innerHTML='';
+    for(let i=0;i<12;i++)
+      E('text',{x:230+(i%6)*90,y:170+Math.floor(i/6)*80,'font-size':46,'text-anchor':'middle',text:'🍓'},berryG);
+  }
+  reset();
+  function share(n){
+    if(busy) return; busy=true; friends=n;
+    reset(); S.woosh();
+    const each=Math.floor(12/n), rem=12%n;
+    for(let f=0;f<n;f++){
+      const px=450+(f-(n-1)/2)*(n>4?150:190);
+      E('ellipse',{cx:px,cy:420,rx:n>4?68:85,ry:20,fill:'#fff',stroke:'var(--ink)','stroke-width':4},plateG);
+      E('text',{x:px,y:465,'font-size':30,'text-anchor':'middle',text:'🧒'},plateG);
+    }
+    const berries=[...berryG.children];
+    berries.forEach((bel,i)=>{
+      setTimeout(()=>{
+        let tx,ty;
+        if(i<each*n){
+          const f=i%n, k=Math.floor(i/n);
+          tx=450+(f-(n-1)/2)*(n>4?150:190)+(k-(each-1)/2)*34;
+          ty=408;
+        } else { tx=80+(i-each*n)*54; ty=100; }
+        const x0=+bel.getAttribute('x'), y0=+bel.getAttribute('y');
+        bel.style.transition='transform .6s cubic-bezier(.3,1.2,.4,1)';
+        bel.style.transform='translate('+(tx-x0)+'px,'+(ty-y0)+'px)';
+        S.pop();
+      }, i*120);
+    });
+    setTimeout(()=>{
+      busy=false;
+      if(rem===0){
+        eq.textContent='12 ÷ '+n+' = '+each+' each';
+        api.setKid('Perfectly fair! Each friend gets <span style="color:var(--go)">'+each+'</span>!');
+        S.ding();
+      } else {
+        eq.textContent='12 ÷ '+n+' = '+each+' each, remainder '+rem;
+        api.setKid('Each gets '+each+' — with <span style="color:var(--boom)">'+rem+' left over</span> for the chef! 👨‍🍳');
+        S.honk();
+      }
+    }, berries.length*120+700);
+  }
+  [2,3,4,5].forEach(n=>{
+    const b=api.button('👧 × '+n, n===5?'boom':'blue');
+    b.addEventListener('click',()=>share(n));
+  });
+}
+}];
+/* ======== CH 2 : ON A GRAPH ======== */
+const M_graph=[
+{
+kid:'Multiplying makes the line <span style="color:var(--car)">steeper!</span>',
+closer:'The line <b>y = k × x</b> is a ramp. Bigger k = steeper ramp: every step right jumps k steps up. Adding slid the line; multiplying <b>tilts</b> it!',
+build(scene,api){
+  const G=api.graph({x:230,y:40,w:520,h:380,xmin:0,xmax:8,ymin:0,ymax:16,xlabel:'x',ylabel:'y',ystep:2});
+  G.numbers(null,2);
+  const base=G.path(v=>v,{stroke:'#b9c4d6','stroke-width':5,'stroke-dasharray':'10 10'});
+  label(scene,G.X(7.4),G.Y(7.4)-14,20,'#8895ab','y = 1x');
+  let k=2;
+  let line=G.path(v=>k*v,{stroke:'var(--car)'});
+  let dot=E('circle',{cx:G.X(3),cy:G.Y(6),r:11,fill:'var(--spark)',stroke:'var(--ink)','stroke-width':4},scene);
+  const tag=label(scene,G.X(5.4),G.Y(11)-16,30,'var(--car-dark)','y = 2x');
+  const skier=E('text',{x:G.X(3),y:G.Y(6)-24,'font-size':38,'text-anchor':'middle',text:'⛷️'},scene);
+  const sl=api.slider(0,4,2,0.5);
+  const lbl=api.button('k = 2','ghost'); lbl.style.pointerEvents='none';
+  sl.addEventListener('input',()=>{
+    k=+sl.value;
+    line.remove();
+    line=G.path(v=>Math.min(20,k*v),{stroke:'var(--car)'});
+    const dy=Math.min(15,k*3);
+    dot.setAttribute('cy',G.Y(dy));
+    skier.setAttribute('y',G.Y(dy)-24);
+    tag.textContent='y = '+k+'x';
+    tag.setAttribute('y',G.Y(Math.max(1,Math.min(15,k*5.4)))-16);
+    lbl.textContent='k = '+k;
+    S.whir();
+    api.setKid(k>1?'k = '+k+': every step right jumps <span style="color:var(--car)">'+k+' up</span>. Steep!':(k===1?'k = 1: one up for one across — the plain ramp.':k===0?'k = 0: flat! Zero × anything = 0.':'k = '+k+': a gentle little ramp.'));
+  });
+}
+},
+{
+kid:'The great race: <span style="color:var(--go)">+2 machine</span> vs <span style="color:var(--car)">×2 machine!</span>',
+closer:'Same starting line, same steps of x. The adder gains 2 each step. The multiplier gives <b>2 for every single x</b> — so its lead grows and grows. Multiplying beats adding in the long run!',
+build(scene,api){
+  const G=api.graph({x:230,y:40,w:520,h:380,xmin:0,xmax:8,ymin:0,ymax:16,xlabel:'x (steps)',ylabel:'y',ystep:2});
+  G.numbers(null,2);
+  let x=0;
+  const addLine=E('g',{},scene), mulLine=E('g',{},scene);
+  const addDot=E('text',{x:G.X(0),y:G.Y(2)+8,'font-size':34,'text-anchor':'middle',text:'🐢'},scene);
+  const mulDot=E('text',{x:G.X(0),y:G.Y(0)+8,'font-size':34,'text-anchor':'middle',text:'🐇'},scene);
+  label(scene,G.X(0.6),G.Y(15),22,'var(--go-dark)','🐢 y = x + 2');
+  label(scene,G.X(0.6),G.Y(13.6),22,'var(--car-dark)','🐇 y = 2 × x');
+  const msg=label(scene,G.X(4.5),G.Y(15),24,'#7c6f57','');
+  function step(){
+    if(x>=8){ S.thud(); return; }
+    x++;
+    const ay=x+2, my=2*x;
+    E('circle',{cx:G.X(x),cy:G.Y(ay),r:8,fill:'var(--go)',stroke:'var(--ink)','stroke-width':3},addLine);
+    E('circle',{cx:G.X(x),cy:G.Y(my),r:8,fill:'var(--car)',stroke:'var(--ink)','stroke-width':3},mulLine);
+    addDot.setAttribute('x',G.X(x)); addDot.setAttribute('y',G.Y(ay)+8);
+    mulDot.setAttribute('x',G.X(x)); mulDot.setAttribute('y',G.Y(my)+8);
+    S.pop();
+    if(my<ay) msg.textContent='Turtle ahead: '+ay+' vs '+my;
+    else if(my===ay) msg.textContent='Tied at x = '+x+'! Both = '+my;
+    else msg.textContent='Rabbit ahead: '+my+' vs '+ay+'!';
+    api.setKid('Step '+x+': adder is at <span style="color:var(--go)">'+ay+'</span>, multiplier at <span style="color:var(--car)">'+my+'</span>'+(my>ay?' — zooming away!':''));
+    if(x===8){ S.tada(); api.setKid('The <span style="color:var(--car)">×2 rabbit wins!</span> Multiplying grows faster than adding.'); }
+  }
+  const b=api.button('👟 Take a step!','go');
+  b.addEventListener('click',step);
+}
+},
+{
+kid:'× climbs <span style="color:var(--car)">steep</span>, ÷ strolls <span style="color:var(--blue)">gentle</span> — mirror twins!',
+closer:'Same k, two jobs. The cyclist rides y = k × x: k up for every 1 across. The walker strolls y = x ÷ k: 1 up for every k across. They mirror each other around the dashed y = x line — because dividing exactly undoes multiplying!',
+build(scene,api){
+  const G=api.graph({x:230,y:40,w:520,h:380,xmin:0,xmax:8,ymin:0,ymax:8,xlabel:'x',ylabel:'y'});
+  G.numbers(null,2);
+  G.path(v=>v,{stroke:'#b9c4d6','stroke-width':5,'stroke-dasharray':'10 10'});
+  label(scene,G.X(7.2),G.Y(7.2)-14,20,'#8895ab','y = x');
+  let k=2, mulLine=null, divLine=null;
+  const mulTag=label(scene,0,0,26,'var(--car-dark)','');
+  const divTag=label(scene,0,0,26,'#33689c','');
+  const biker=E('text',{x:0,y:0,'font-size':36,'text-anchor':'middle',text:'🚴'},scene);
+  const walker=E('text',{x:0,y:0,'font-size':36,'text-anchor':'middle',text:'🚶'},scene);
+  function redraw(){
+    if(mulLine) mulLine.remove();
+    if(divLine) divLine.remove();
+    mulLine=G.path(v=>Math.min(9,k*v),{stroke:'var(--car)'});
+    divLine=G.path(v=>v/k,{stroke:'var(--blue)'});
+    const bx=Math.min(7.6/k,7.6);
+    biker.setAttribute('x',G.X(bx*0.8)); biker.setAttribute('y',G.Y(k*bx*0.8)-16);
+    walker.setAttribute('x',G.X(6.4)); walker.setAttribute('y',G.Y(6.4/k)-16);
+    mulTag.textContent='🚴 y = '+k+' × x';
+    mulTag.setAttribute('x',G.X(1.15)); mulTag.setAttribute('y',G.Y(Math.min(7.5,k*1.9)));
+    divTag.textContent='🚶 y = x ÷ '+k;
+    divTag.setAttribute('x',G.X(6.4)); divTag.setAttribute('y',G.Y(6.4/k)+42);
+  }
+  redraw();
+  const sl=api.slider(2,4,2);
+  const lbl=api.button('k = 2','ghost'); lbl.style.pointerEvents='none';
+  sl.addEventListener('input',()=>{
+    k=+sl.value; lbl.textContent='k = '+k; S.whir(); redraw();
+    api.setKid('k = '+k+': the cyclist climbs <span style="color:var(--car)">'+k+' per step</span>, the walker needs <span style="color:var(--blue)">'+k+' steps for 1</span>!');
+  });
+}
+}];
+/* ======== CH 3 : REAL WORLD ======== */
+const M_world=[
+{
+kid:'Every car has 4 wheels. How many wheels roll by?',
+closer:'You don\'t have to count wheel-by-wheel — count the cars and <b>multiply by 4</b>! Groups-of-the-same-size are everywhere: wheels, egg boxes, spider legs…',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'var(--sky)'},scene);
+  E('rect',{y:360,width:900,height:120,fill:'var(--road)'},scene);
+  E('line',{x1:0,y1:420,x2:900,y2:420,stroke:'var(--stripe)','stroke-width':7,'stroke-dasharray':'40 34'},scene);
+  const eq=label(scene,450,70,48,'var(--ink)','0 cars × 4 = 0 wheels');
+  const carsG=E('g',{},scene);
+  let cars=0;
+  const colors=['var(--car)','var(--blue)','var(--go)','var(--fuel)','#B08BD9'];
+  function draw(){
+    carsG.innerHTML='';
+    for(let i=0;i<cars;i++){
+      const x=90+i*165, col=colors[i%5];
+      const cg=E('g',{},carsG);
+      E('rect',{x:x,y:300,width:130,height:44,rx:14,fill:col,stroke:'var(--ink)','stroke-width':4},cg);
+      E('path',{d:'M '+(x+22)+' 302 Q '+(x+32)+' 272 '+(x+62)+' 270 L '+(x+92)+' 270 Q '+(x+112)+' 274 '+(x+118)+' 302 Z',fill:col,stroke:'var(--ink)','stroke-width':3},cg);
+      E('circle',{cx:x+34,cy:348,r:18,fill:'var(--ink)'},cg);
+      E('circle',{cx:x+96,cy:348,r:18,fill:'var(--ink)'},cg);
+      E('circle',{cx:x+34,cy:348,r:8,fill:'var(--metal)'},cg);
+      E('circle',{cx:x+96,cy:348,r:8,fill:'var(--metal)'},cg);
+      label(cg,x+34,395,20,'#fff','2');
+      label(cg,x+96,395,20,'#fff','2');
+    }
+    eq.textContent=cars+' car'+(cars===1?'':'s')+' × 4 = '+(cars*4)+' wheels';
+  }
+  draw();
+  const add=api.button('🚗 + 1 car','go'), rm=api.button('− 1 car','boom');
+  add.addEventListener('click',()=>{ if(cars>=5){S.thud();return;} cars++; S.honk(); draw();
+    api.setKid(cars+' cars — that\'s <span style="color:var(--blue)">'+(cars*4)+'</span> wheels, no counting one-by-one!'); });
+  rm.addEventListener('click',()=>{ if(cars<=0){S.thud();return;} cars--; S.pop(); draw(); });
+}
+},
+{
+kid:'Share the pizza — dividing keeps it <span style="color:var(--go)">fair!</span>',
+closer:'8 slices ÷ number of friends = slices each. More friends means fewer slices per person — that\'s why the answer gets <b>smaller</b> when you divide by a bigger number!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FFF3E0'},scene);
+  const eq=label(scene,450,60,44,'var(--ink)','8 slices, 2 friends');
+  const cx=450, cy=270, R=150;
+  const pizzaG=E('g',{},scene);
+  function drawPizza(n){
+    pizzaG.innerHTML='';
+    const per=8/n;
+    const cols=['#F5C043','#F0B240'];
+    for(let i=0;i<8;i++){
+      const a0=(i/8)*Math.PI*2-Math.PI/2, a1=((i+1)/8)*Math.PI*2-Math.PI/2;
+      const friend=Math.floor(i/per);
+      const midA=(a0+a1)/2;
+      const push=8+(friend%2)*6;
+      const ox=Math.cos((friend+0.5)/n*Math.PI*2-Math.PI/2)*push*2.2;
+      const oy=Math.sin((friend+0.5)/n*Math.PI*2-Math.PI/2)*push*2.2;
+      const p=E('path',{d:'M '+(cx+ox)+' '+(cy+oy)+' L '+(cx+ox+Math.cos(a0)*R)+' '+(cy+oy+Math.sin(a0)*R)+
+        ' A '+R+' '+R+' 0 0 1 '+(cx+ox+Math.cos(a1)*R)+' '+(cy+oy+Math.sin(a1)*R)+' Z',
+        fill:cols[i%2],stroke:'var(--ink)','stroke-width':4},pizzaG);
+      E('circle',{cx:cx+ox+Math.cos(midA)*R*0.62,cy:cy+oy+Math.sin(midA)*R*0.62,r:9,fill:'var(--car)'},pizzaG);
+    }
+    for(let f=0;f<n;f++){
+      const a=(f+0.5)/n*Math.PI*2-Math.PI/2;
+      E('text',{x:cx+Math.cos(a)*(R+70),y:cy+Math.sin(a)*(R+70)+10,'font-size':40,'text-anchor':'middle',text:'🧒'},pizzaG);
+      label(pizzaG,cx+Math.cos(a)*(R+70),cy+Math.sin(a)*(R+70)+44,20,'#a06a2c',per+' each');
+    }
+    eq.textContent='8 ÷ '+n+' = '+per+' slices each';
+  }
+  drawPizza(2);
+  [1,2,4,8].forEach(n=>{
+    const b=api.button('👧 '+n, n===2?'go':'ghost');
+    b.addEventListener('click',()=>{
+      S.woosh(); drawPizza(n);
+      api.setKid(n===1?'All 8 slices for you… tummy ache! 🤢':(n===8?'8 friends — just <span style="color:var(--go)">1</span> slice each. Still fair!':'8 ÷ '+n+' = <span style="color:var(--go)">'+(8/n)+'</span> slices each!'));
+    });
+  });
+}
+},
+{
+kid:'Saving 3 coins a week — multiplication is a <span style="color:var(--fuel)">time machine!</span>',
+closer:'To know your money after 6 weeks you don\'t wait 6 weeks — you multiply: 6 × 3 = 18. Multiplication answers "how much after MANY equal steps?" in a snap.',
+build(scene,api){
+  const G=api.graph({x:210,y:60,w:560,h:340,xmin:0,xmax:8,ymin:0,ymax:24,xlabel:'weeks',ylabel:'coins',ystep:3});
+  G.numbers('x');
+  for(let vy=0;vy<=24;vy+=6) label(scene,G.opt.x-24,G.Y(vy)+5,16,'#9a8d70',vy);
+  G.path(v=>3*v,{stroke:'#E7DFC8','stroke-width':4,'stroke-dasharray':'8 8'});
+  const barsG=E('g',{},scene);
+  const eq=label(scene,450,40,38,'var(--ink)','Week 0: 0 coins');
+  let w=0;
+  const sl=api.slider(0,8,0);
+  const lbl=api.button('week 0','ghost'); lbl.style.pointerEvents='none';
+  function draw(){
+    barsG.innerHTML='';
+    for(let i=1;i<=w;i++){
+      E('rect',{x:G.X(i)-20,y:G.Y(3*i),width:40,height:G.Y(0)-G.Y(3*i),rx:8,fill:'var(--fuel)',stroke:'var(--ink)','stroke-width':3,opacity:i===w?1:.55},barsG);
+      E('text',{x:G.X(i),y:G.Y(3*i)-10,'font-size':20,'text-anchor':'middle','font-family':'Baloo 2','font-weight':800,fill:'#a06a2c',text:3*i},barsG);
+    }
+    if(w>0) E('text',{x:G.X(w),y:G.Y(3*w)-34,'font-size':30,'text-anchor':'middle',text:'🪙'},barsG);
+    eq.textContent='Week '+w+': '+w+' × 3 = '+(3*w)+' coins';
+    lbl.textContent='week '+w;
+  }
+  draw();
+  sl.addEventListener('input',()=>{
+    w=+sl.value; S.pop(); draw();
+    api.setKid(w===0?'Week zero — the piggy bank is empty!':'Zoom to week '+w+': '+w+' × 3 = <span style="color:var(--fuel)">'+(3*w)+'</span> coins. No waiting!');
+    if(w===8) S.tada();
+  });
+}
+}];
+registerLesson('muldiv',[
+{stages:M_num, qa:[
+  {q:'Is multiplying really just adding?', a:'Yes! Three times four means four plus four plus four. Multiplying is a shortcut for adding the same number again and again — it gets you there in one jump instead of many little hops.'},
+  {q:'Why doesn\'t flipping change the answer?', a:'Look at the rectangle of stars and tilt your head! Three rows of five and five rows of three are the very same rectangle turned sideways. The stars never left, so the count cannot change. That works for every pair of numbers.'},
+  {q:'What if sharing doesn\'t come out even?', a:'The extras are called the remainder. Twelve strawberries for five friends: everyone gets two, and two are left over. The remainder is never bigger than the number of friends — otherwise you could deal another round!'}
+]},
+{stages:M_graph, qa:[
+  {q:'Why does multiplying tilt the line?', a:'Because the jump gets bigger with every step. Times two means one step across climbs two up, two across climbs four up. Compare that with adding, which only LIFTS the line without changing its tilt.'},
+  {q:'Who wins, plus two or times two?', a:'At the start, plus two is ahead — it gets a free head start. But times two grows WITH x, so it catches up at two and then runs away forever. Multiplying beats adding in the long run.'},
+  {q:'What does dividing look like?', a:'A gentle ramp. Divide by two and you need TWO steps across to climb one step up. Dividing is multiplying\'s opposite, so it un-tilts exactly what multiplying tilted.'}
+]},
+{stages:M_world, qa:[
+  {q:'Why count cars instead of wheels?', a:'Because every car carries the SAME number of wheels — four. When groups are all the same size, one multiplication replaces lots of counting: five cars, times four, twenty wheels. Done!'},
+  {q:'What makes a share "fair"?', a:'Fair means everyone gets exactly the same amount — and that is precisely what dividing promises. Eight slices for four friends is two each, no arguments at the table.'},
+  {q:'How is multiplying a time machine?', a:'If the same thing happens every week — like saving three coins — you don\'t have to wait and count week by week. Six weeks, times three coins, is eighteen. Multiplication skips you straight to the future total.'}
+]}]);
+})();
+/* ---------------- EXPONENTS & SQUARE ROOTS ---------------- */
+(function(){
+const TXT={ 'font-family':'Baloo 2','font-weight':800 };
+function label(scene,x,y,size,fill,str,anchor){
+  return E('text',Object.assign({x:x,y:y,'font-size':size,fill:fill||'var(--ink)','text-anchor':anchor||'middle'},TXT,{text:str}),scene);
+}
+/* ======== CH 1 : NUMBERS ======== */
+const X_num=[
+{
+kid:'An exponent means: <span style="color:var(--fuel)">multiply again and again!</span>',
+closer:'2⁴ doesn\'t mean 2 × 4. It means 2 × 2 × 2 × 2 — the little number counts <b>how many times</b> you multiply. Just like × was speedy adding, exponents are speedy multiplying!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#EFF7EC'},scene);
+  const eq=label(scene,450,64,48,'var(--ink)','2¹ = 2');
+  const sub=label(scene,450,106,26,'#4b6a52','that\'s just 2');
+  const bunG=E('g',{},scene);
+  const sups=['⁰','¹','²','³','⁴','⁵','⁶'];
+  let n=1;
+  function draw(){
+    bunG.innerHTML='';
+    const count=Math.pow(2,n);
+    const cols=Math.min(count,16);
+    const rows=Math.ceil(count/cols);
+    const size=count<=8?60:(count<=16?46:(count<=32?36:26));
+    for(let i=0;i<count;i++){
+      const c=i%cols, r=Math.floor(i/cols);
+      E('text',{x:450+(c-(cols-1)/2)*(size*0.95),y:260+(r-(rows-1)/2)*(size*1.02),
+        'font-size':size,'text-anchor':'middle',text:'🐰'},bunG);
+    }
+    eq.textContent='2'+sups[n]+' = '+count;
+    sub.textContent='that\'s '+Array(n).fill('2').join(' × ')+(n===1?' (just one 2)':'');
+  }
+  draw();
+  const db=api.button('🐰 Double the bunnies!','go'), rs=api.button('🔄','ghost');
+  db.addEventListener('click',()=>{
+    if(n>=6){ S.thud(); api.setKid('64 bunnies — the meadow is FULL! 🥕'); return; }
+    n++; S.pop(); draw();
+    api.setKid('Doubled '+n+' times: 2'+sups[n]+' = <span style="color:var(--fuel)">'+Math.pow(2,n)+'</span> bunnies!');
+    if(n===6) S.tada();
+  });
+  rs.addEventListener('click',()=>{ n=1; S.pop(); draw();
+    api.setKid('An exponent means: <span style="color:var(--fuel)">multiply again and again!</span>'); });
+}
+},
+{
+kid:'n² is called "squared" because it IS a <span style="color:var(--blue)">square!</span>',
+closer:'n × n blocks always build a perfect square shape — that\'s where the name comes from! 4² = 16 is a 4-by-4 square. The area of any square is side × side = side².',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#243B6B'},scene);
+  const eq=label(scene,450,60,48,'#fff','4² = 4 × 4 = 16');
+  const gridG=E('g',{},scene);
+  let n=4;
+  function draw(){
+    gridG.innerHTML='';
+    const cell=Math.min(46,300/n);
+    const ox=450-n*cell/2, oy=270-n*cell/2;
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++)
+      E('rect',{x:ox+c*cell+2,y:oy+r*cell+2,width:cell-4,height:cell-4,rx:6,
+        fill:(r===0||c===0)?'var(--spark)':'var(--blue)',stroke:'#12204d','stroke-width':2},gridG);
+    E('text',{x:ox-24,y:270,'font-size':30,'text-anchor':'middle','font-family':'Baloo 2','font-weight':800,fill:'#8FC7FF',text:n},gridG);
+    E('text',{x:450,y:oy+n*cell+34,'font-size':30,'text-anchor':'middle','font-family':'Baloo 2','font-weight':800,fill:'#8FC7FF',text:n},gridG);
+    eq.textContent=n+'² = '+n+' × '+n+' = '+(n*n);
+  }
+  draw();
+  const sl=api.slider(1,8,4);
+  const lbl=api.button('side = 4','ghost'); lbl.style.pointerEvents='none';
+  sl.addEventListener('input',()=>{
+    n=+sl.value; lbl.textContent='side = '+n; S.whir(); draw();
+    api.setKid(n+'² = <span style="color:var(--blue)">'+(n*n)+'</span> blocks — always a perfect square shape!');
+  });
+}
+},
+{
+kid:'Square root asks: <span style="color:var(--go)">what was the side?</span>',
+closer:'√ (the square root) walks backwards: you know the square has 25 blocks, √25 finds the side — 5. Squaring and square-rooting undo each other, just like + and −, and × and ÷!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#EFF7EC'},scene);
+  const puzzles=[16,25,36,49];
+  let pi=0, area=puzzles[0];
+  const eq=label(scene,450,60,46,'var(--ink)','√16 = ?');
+  const msg=label(scene,450,105,26,'#4b6a52','A square garden with 16 flowers… how long is each side?');
+  const gridG=E('g',{},scene);
+  function drawSquare(){
+    gridG.innerHTML='';
+    const side=Math.sqrt(area), cell=Math.min(40,260/side);
+    const ox=450-side*cell/2, oy=280-side*cell/2;
+    for(let r=0;r<side;r++)for(let c=0;c<side;c++)
+      E('text',{x:ox+c*cell+cell/2,y:oy+r*cell+cell*0.8,'font-size':cell*0.8,'text-anchor':'middle',text:'🌼'},gridG);
+    eq.textContent='√'+area+' = ?';
+    msg.textContent='A square garden with '+area+' flowers… how long is each side?';
+  }
+  drawSquare();
+  const btns=[];
+  function makeGuesses(){
+    btns.forEach(b=>b.remove()); btns.length=0;
+    const side=Math.sqrt(area);
+    [side-1,side,side+1].sort(()=>Math.random()-.5).forEach(v=>{
+      const b=api.button('side = '+v,'blue');
+      b.addEventListener('click',()=>{
+        if(v===side){
+          S.ding(); eq.textContent='√'+area+' = '+side;
+          api.setKid('Yes! √'+area+' = <span style="color:var(--go)">'+side+'</span>, because '+side+' × '+side+' = '+area+'!');
+          setTimeout(()=>{
+            pi=(pi+1)%puzzles.length; area=puzzles[pi];
+            drawSquare(); makeGuesses();
+            api.setKid('Next garden! Square root asks: <span style="color:var(--go)">what was the side?</span>');
+          },1600);
+        } else {
+          S.thud();
+          api.setKid(v+' × '+v+' = '+(v*v)+' — '+(v*v>area?'too many!':'not enough!')+' Try again!');
+          b.style.opacity=.35;
+        }
+      });
+      btns.push(b);
+    });
+  }
+  makeGuesses();
+}
+}];
+/* ======== CH 2 : ON A GRAPH ======== */
+const X_graph=[
+{
+kid:'x² doesn\'t make a line — it makes a <span style="color:var(--boom)">rocket curve!</span>',
+closer:'Race time again! The straight line y = 2x gains the same amount every step. But y = x² gains MORE each step (1, 3, 5, 7 more…) so it curves upward faster and faster. That curve is called a <b>parabola</b>.',
+build(scene,api){
+  const G=api.graph({x:230,y:40,w:520,h:380,xmin:0,xmax:6,ymin:0,ymax:36,xlabel:'x',ylabel:'y',ystep:6});
+  for(let vy=0;vy<=36;vy+=6) label(scene,G.opt.x-24,G.Y(vy)+5,15,'#9a8d70',vy);
+  G.numbers('x');
+  let x=0;
+  const rabbit=E('text',{x:G.X(0),y:G.Y(0)+8,'font-size':32,'text-anchor':'middle',text:'🐇'},scene);
+  const rocket=E('text',{x:G.X(0),y:G.Y(0)+8,'font-size':32,'text-anchor':'middle',text:'🚀'},scene);
+  label(scene,G.X(0.8),G.Y(34),21,'var(--car-dark)','🐇 y = 2x');
+  label(scene,G.X(0.8),G.Y(31),21,'#b34e00','🚀 y = x²');
+  const dotsG=E('g',{},scene);
+  const b=api.button('👟 Take a step!','go');
+  b.addEventListener('click',()=>{
+    if(x>=6){ S.thud(); return; }
+    x++;
+    const ly=2*x, py=x*x;
+    E('circle',{cx:G.X(x),cy:G.Y(ly),r:7,fill:'var(--car)',stroke:'var(--ink)','stroke-width':3},dotsG);
+    E('circle',{cx:G.X(x),cy:G.Y(py),r:7,fill:'var(--boom)',stroke:'var(--ink)','stroke-width':3},dotsG);
+    rabbit.setAttribute('x',G.X(x)); rabbit.setAttribute('y',G.Y(ly)+8);
+    rocket.setAttribute('x',G.X(x)); rocket.setAttribute('y',G.Y(py)+8);
+    S.pop();
+    if(py<ly) api.setKid('x = '+x+': line at '+ly+', rocket only at '+py+'… wait for it!');
+    else if(py===ly) api.setKid('x = 2: TIED at 4! The rocket is warming up… 🔥');
+    else api.setKid('x = '+x+': rocket at <span style="color:var(--boom)">'+py+'</span>, line at '+ly+' — blast off!');
+    if(x===6){
+      S.tada();
+      const p1=G.path(v=>2*v,{stroke:'var(--car)','stroke-width':5});
+      const p2=G.path(v=>v*v,{stroke:'var(--boom)','stroke-width':6});
+      api.drawIn(p1,800); api.drawIn(p2,1200);
+      api.setKid('See the shapes? Straight <span style="color:var(--car)">line</span> vs curving-up <span style="color:var(--boom)">parabola!</span>');
+    }
+  });
+}
+},
+{
+kid:'The parabola is a perfect <span style="color:var(--blue)">mirror!</span>',
+closer:'Slide the ball to the LEFT side: (−3)² = 9, exactly the same as 3² = 9! A negative times a negative is positive, so both sides of the parabola rise the same way. It\'s symmetric, like butterfly wings. 🦋',
+build(scene,api){
+  const G=api.graph({x:230,y:40,w:520,h:380,xmin:-6,xmax:6,ymin:0,ymax:36,xlabel:'x',ylabel:'y = x²',ystep:6,xstep:2});
+  for(let vy=6;vy<=36;vy+=6) label(scene,G.X(0)-14,G.Y(vy)+5,15,'#9a8d70',vy,'end');
+  [-6,-4,-2,2,4,6].forEach(vx=>label(scene,G.X(vx),G.Y(0)+24,15,'#9a8d70',vx));
+  const curve=G.path(v=>v*v,{stroke:'var(--blue)','stroke-width':6});
+  api.drawIn(curve,1000);
+  const ball=E('text',{x:G.X(2),y:G.Y(4)-6,'font-size':36,'text-anchor':'middle',text:'⚽'},scene);
+  const mirBall=E('text',{x:G.X(-2),y:G.Y(4)-6,'font-size':30,'text-anchor':'middle',text:'👻',opacity:.5},scene);
+  const tag=label(scene,450,36,32,'#33689c','2² = 4   and   (−2)² = 4');
+  const sl=api.slider(-6,6,2,1);
+  sl.addEventListener('input',()=>{
+    const v=+sl.value, y=v*v;
+    ball.setAttribute('x',G.X(v)); ball.setAttribute('y',G.Y(y)-6);
+    mirBall.setAttribute('x',G.X(-v)); mirBall.setAttribute('y',G.Y(y)-6);
+    S.whir();
+    if(v===0){ tag.textContent='0² = 0 — the very bottom!';
+      api.setKid('Zero squared is zero — the parabola\'s lowest point.'); }
+    else{
+      tag.textContent=(v>0?v:'(−'+(-v)+')')+'² = '+y+'   and   '+(v>0?'(−'+v+')':(-v))+'² = '+y;
+      api.setKid('x = '+v+' gives '+y+' … and so does x = '+(-v)+'! <span style="color:var(--blue)">Perfect mirror!</span>');
+    }
+  });
+}
+},
+{
+kid:'√x is the parabola <span style="color:var(--go)">flipped over</span> — slow and steady!',
+closer:'Square root undoes squaring, so its graph is the parabola reflected across the diagonal. It keeps growing forever, but slower and slower — to climb 1 more, you need lots more x!',
+build(scene,api){
+  const G=api.graph({x:230,y:40,w:520,h:380,xmin:0,xmax:36,ymin:0,ymax:9,xlabel:'x',ylabel:'y',xstep:6,ystep:1});
+  [6,12,18,24,30,36].forEach(vx=>label(scene,G.X(vx),G.Y(0)+24,15,'#9a8d70',vx));
+  G.numbers('y');
+  const sq=G.path(v=>Math.min(10,v*v),{stroke:'#E8B3AA','stroke-width':4,'stroke-dasharray':'8 8'},0,3.4);
+  label(scene,G.X(6),G.Y(8.4),19,'#c98a80','y = x² (zoomed)');
+  const root=G.path(v=>Math.sqrt(v),{stroke:'var(--go)','stroke-width':7});
+  api.drawIn(root,1200);
+  label(scene,G.X(30),G.Y(5.9),24,'var(--go-dark)','y = √x');
+  const climber=E('text',{x:G.X(9),y:G.Y(3)-8,'font-size':36,'text-anchor':'middle',text:'🧗'},scene);
+  const tag=label(scene,450,36,32,'var(--go-dark)','√9 = 3');
+  const sl=api.slider(0,36,9,1);
+  sl.addEventListener('input',()=>{
+    const v=+sl.value, y=Math.sqrt(v);
+    climber.setAttribute('x',G.X(v)); climber.setAttribute('y',G.Y(y)-8);
+    const nice=Number.isInteger(y)?y:y.toFixed(2);
+    tag.textContent='√'+v+' = '+nice;
+    S.whir();
+    api.setKid(Number.isInteger(y)?'√'+v+' = <span style="color:var(--go)">'+y+'</span> — a perfect square!':'√'+v+' ≈ '+nice+' — between whole numbers is fine too!');
+  });
+}
+}];
+/* ======== CH 3 : REAL WORLD ======== */
+const X_world=[
+{
+kid:'Fold paper and the layers <span style="color:var(--boom)">EXPLODE!</span>',
+closer:'Each fold doubles the layers: 2, 4, 8, 16… that\'s 2ⁿ. Paper gets impossible to fold after ~7 folds — and if you COULD fold it 42 times, it would reach the Moon! That\'s exponential growth.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#E8F6FF'},scene);
+  const eq=label(scene,450,60,46,'var(--ink)','0 folds = 1 layer');
+  const facts=['','2 layers','4 layers','8 — like a greeting card','16 — a little booklet','32 — a chapter!','64 — a whole comic book!','128 — no human can fold this! 💪'];
+  const msg=label(scene,450,104,25,'#33689c','Fold it and watch the layers stack!');
+  const stackG=E('g',{},scene);
+  let folds=0;
+  function draw(){
+    stackG.innerHTML='';
+    const layers=Math.pow(2,folds);
+    const w=Math.max(120,420/Math.pow(1.35,folds));
+    const h=Math.min(7,220/layers)+2;
+    for(let i=0;i<Math.min(layers,40);i++)
+      E('rect',{x:450-w/2,y:400-i*h,width:w,height:Math.max(3,h-1),rx:2,
+        fill:i%2?'#fff':'#F3EBD8',stroke:'#b9a988','stroke-width':1},stackG);
+    if(layers>40) label(stackG,450,400-42*h,26,'#33689c','…'+layers+' layers!');
+    eq.textContent=folds+' fold'+(folds===1?'':'s')+' = 2'+['⁰','¹','²','³','⁴','⁵','⁶','⁷'][folds]+' = '+layers+' layer'+(layers===1?'':'s');
+    msg.textContent=facts[folds]||'Fold it and watch the layers stack!';
+  }
+  draw();
+  const fb=api.button('📄 FOLD!','go'), rb=api.button('🔄','ghost');
+  fb.addEventListener('click',()=>{
+    if(folds>=7){ S.thud(); api.setKid('Stuck at 7 folds! (42 folds would reach the <span style="color:var(--boom)">Moon</span> 🌙)'); return; }
+    folds++; S.pop(); draw();
+    api.setKid('Fold '+folds+': <span style="color:var(--boom)">'+Math.pow(2,folds)+'</span> layers — doubling is sneaky-fast!');
+    if(folds===7) S.tada();
+  });
+  rb.addEventListener('click',()=>{ folds=0; S.pop(); draw();
+    api.setKid('Fold paper and the layers <span style="color:var(--boom)">EXPLODE!</span>'); });
+}
+},
+{
+kid:'How many tiles for a square floor? <span style="color:var(--blue)">Side²!</span>',
+closer:'A square room with side 5 needs 5² = 25 tiles. And backwards: got 36 tiles at the store? √36 = 6, so they\'ll cover a 6-by-6 floor exactly. Builders use squares and roots every day!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FFF3E0'},scene);
+  const eq=label(scene,450,56,44,'var(--ink)','side 5 → 5² = 25 tiles');
+  const floorG=E('g',{},scene);
+  let side=5;
+  function draw(){
+    floorG.innerHTML='';
+    const cell=Math.min(44,300/side);
+    const ox=450-side*cell/2, oy=270-side*cell/2;
+    E('rect',{x:ox-14,y:oy-14,width:side*cell+28,height:side*cell+28,rx:10,fill:'#C88A4B',stroke:'var(--ink)','stroke-width':5},floorG);
+    for(let r=0;r<side;r++)for(let c=0;c<side;c++)
+      E('rect',{x:ox+c*cell+2,y:oy+r*cell+2,width:cell-4,height:cell-4,rx:4,
+        fill:(r+c)%2?'#F3EBD8':'#fff',stroke:'#b9a988','stroke-width':1.5},floorG);
+    E('text',{x:ox+side*cell/2,y:oy+side*cell+46,'font-size':26,'text-anchor':'middle','font-family':'Baloo 2','font-weight':800,fill:'#a06a2c',text:'side = '+side},floorG);
+    eq.textContent='side '+side+' → '+side+'² = '+(side*side)+' tiles';
+  }
+  draw();
+  const sl=api.slider(2,8,5);
+  sl.addEventListener('input',()=>{
+    side=+sl.value; S.whir(); draw();
+    api.setKid('Side '+side+' needs <span style="color:var(--blue)">'+(side*side)+'</span> tiles… and √'+(side*side)+' = '+side+' brings you back!');
+  });
+}
+},
+{
+kid:'One germ doubles every hour… <span style="color:var(--boom)">wash your hands!</span>',
+closer:'Living things often grow exponentially: 1 germ becomes 2, then 4, then 8… After 10 hours that\'s 2¹⁰ = 1,024! This is real science — it\'s why doctors act FAST, and why soap is a superhero. 🧼',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#F3EEFB'},scene);
+  E('circle',{cx:450,cy:270,r:190,fill:'#fff',stroke:'#B08BD9','stroke-width':8},scene);
+  label(scene,450,64,42,'var(--ink)','Hour 0: 1 germ');
+  const eq=scene.lastChild;
+  const germG=E('g',{},scene);
+  let hour=0;
+  const rnd=[];
+  for(let i=0;i<64;i++){ const a=i*2.399963, r=Math.sqrt(i/64)*165; rnd.push([450+Math.cos(a)*r,270+Math.sin(a)*r]); }
+  function draw(){
+    germG.innerHTML='';
+    const count=Math.pow(2,hour);
+    const show=Math.min(count,64);
+    const size=hour<3?46:(hour<5?34:24);
+    for(let i=0;i<show;i++)
+      E('text',{x:rnd[i][0],y:rnd[i][1],'font-size':size,'text-anchor':'middle',text:'🦠'},germG);
+    eq.textContent='Hour '+hour+': 2'+['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹','¹⁰'][hour]+' = '+count.toLocaleString()+' germ'+(count===1?'':'s');
+  }
+  draw();
+  const hb=api.button('⏰ +1 hour','boom'), wb=api.button('🧼 SOAP!','go');
+  hb.addEventListener('click',()=>{
+    if(hour>=10){ S.thud(); return; }
+    hour++; S.pop(); draw();
+    const c=Math.pow(2,hour);
+    api.setKid(hour<5?'Hour '+hour+': '+c+' germs… doubling quietly.':'Hour '+hour+': <span style="color:var(--boom)">'+c.toLocaleString()+'</span> germs! Exponents are FAST!');
+  });
+  wb.addEventListener('click',()=>{
+    hour=0; S.ding(); draw();
+    api.setKid('SOAP! 🧼 Back to 1 germ. Hand-washing beats exponents every time!');
+  });
+}
+}];
+registerLesson('exproot',[
+{stages:X_num, qa:[
+  {q:'What does the little floating number mean?', a:'It counts how many times you multiply. Two to the fourth means two times two times two times two. It is NOT two times four — that trap catches almost everyone once!'},
+  {q:'Why is it called "squared"?', a:'Because a number times itself literally builds a square! Four rows of four blocks make a perfect square shape with sixteen blocks. The name comes straight from the picture.'},
+  {q:'What does the square root do?', a:'It walks backwards. Squaring turns the side into the area; the square root turns the area back into the side. Root twenty-five asks: which number, times itself, makes twenty-five? Five!'}
+]},
+{stages:X_graph, qa:[
+  {q:'Why does x squared curve upward?', a:'Because each step gains MORE than the step before — first one more, then three more, then five more, then seven. Growing gains bend the path upward into the curve called a parabola.'},
+  {q:'Why is a negative number squared positive?', a:'A negative times a negative flips back to positive. So negative three squared is nine, exactly like positive three squared. That is why the parabola has two matching wings.'},
+  {q:'Why is the square root curve so slow?', a:'It is the parabola flipped sideways, so it works in reverse: you need four to reach two, nine to reach three, sixteen to reach four. It never stops climbing — it just needs more and more x for each step up.'}
+]},
+{stages:X_world, qa:[
+  {q:'Why can nobody fold paper 8 times?', a:'Each fold DOUBLES the thickness. Seven folds is already one hundred twenty-eight layers — stiffer than a book cover! And if you somehow folded forty-two times, the stack would reach the Moon. Doubling hides enormous power.'},
+  {q:'Where else does doubling happen?', a:'Germs splitting, rumors spreading, money earning interest, populations growing. Anything that multiplies itself grows exponentially — slow-looking at first, then suddenly huge.'},
+  {q:'How do builders use square roots?', a:'Backwards from the tiles! If a square floor needs thirty-six tiles, the builder takes the square root and knows each wall is six tiles long. Roots turn areas back into lengths.'}
+]}]);
+})();
+/* ---------------- DERIVATIVES & INTEGRALS ---------------- */
+(function(){
+const TXT={ 'font-family':'Baloo 2','font-weight':800 };
+function label(scene,x,y,size,fill,str,anchor){
+  return E('text',Object.assign({x:x,y:y,'font-size':size,fill:fill||'var(--ink)','text-anchor':anchor||'middle'},TXT,{text:str}),scene);
+}
+function gauge(scene,cx,cy,r,title){
+  E('path',{d:'M '+(cx-r)+' '+cy+' A '+r+' '+r+' 0 0 1 '+(cx+r)+' '+cy,fill:'none',stroke:'var(--ink)','stroke-width':7},scene);
+  E('path',{d:'M '+(cx-r)+' '+cy+' L '+(cx+r)+' '+cy,stroke:'var(--ink)','stroke-width':7},scene);
+  for(let i=0;i<=6;i++){
+    const a=Math.PI-(i/6)*Math.PI;
+    E('line',{x1:cx+Math.cos(a)*(r-4),y1:cy-Math.sin(a)*(r-4),x2:cx+Math.cos(a)*(r-16),y2:cy-Math.sin(a)*(r-16),stroke:'var(--ink)','stroke-width':4},scene);
+  }
+  const needle=E('line',{x1:cx,y1:cy,x2:cx-r+22,y2:cy,stroke:'var(--car)','stroke-width':7,'stroke-linecap':'round'},scene);
+  E('circle',{cx:cx,cy:cy,r:9,fill:'var(--ink)'},scene);
+  label(scene,cx,cy+30,19,'#54607a',title);
+  return {set(v01){ /* 0..1 */
+    const a=Math.PI-Math.max(0,Math.min(1,v01))*Math.PI;
+    needle.setAttribute('x2',cx+Math.cos(a)*(r-22));
+    needle.setAttribute('y2',cy-Math.sin(a)*(r-22));
+  }};
+}
+/* ======== CH 1 : NUMBERS (the two big ideas) ======== */
+const C_num=[
+{
+kid:'The derivative asks: <span style="color:var(--car)">how steep is it RIGHT HERE?</span>',
+closer:'Walk the three hills. Your height changes as you walk — <b>steepness is how fast your height changes per step</b>. Flat = 0. Gentle = a little per step. Steep = a lot per step! "Rate of change" is the whole idea of a derivative.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'var(--sky)'},scene);
+  E('rect',{y:400,width:900,height:80,fill:'var(--grass)'},scene);
+  const hills=[
+    {x0:40, w:240, h:0,  name:'FLAT',   col:'#8ED081', slope:0},
+    {x0:330,w:240, h:90, name:'GENTLE', col:'#5FA65F', slope:1},
+    {x0:620,w:240, h:210,name:'STEEP',  col:'#3E7A4A', slope:3}
+  ];
+  hills.forEach(h=>{
+    E('path',{d:'M '+h.x0+' 400 L '+(h.x0+h.w)+' '+(400-h.h)+' L '+(h.x0+h.w)+' 400 Z',fill:h.col,stroke:'var(--ink)','stroke-width':4},scene);
+    label(scene,h.x0+h.w/2,440,22,'#2c5c38',h.name);
+  });
+  const meter=gauge(scene,450,180,90,'steepness meter');
+  const mVal=label(scene,450,140,34,'var(--car-dark)','—');
+  const walker=E('text',{x:60,y:388,'font-size':44,'text-anchor':'middle',text:'🚶'},scene);
+  let anim=null;
+  hills.forEach((h,i)=>{
+    const b=api.button(i===0?'🟩 Flat':(i===1?'⛰️ Gentle':'🏔️ Steep'), i===0?'ghost':(i===1?'blue':'boom'));
+    b.addEventListener('click',()=>{
+      if(anim) return;
+      S.pop();
+      const t0=performance.now();
+      anim={h:h,t0:t0};
+      meter.set(h.slope/3.5); mVal.textContent=h.slope+' up per step';
+      api.setKid(h.slope===0?'Flat path: height change = <span style="color:var(--car)">0</span>. Easy stroll!':
+        (h.slope===1?'Gentle hill: up <span style="color:var(--car)">1</span> for every step across.':'Steep hill: up <span style="color:var(--car)">3</span> every step — puff puff! 🥵'));
+      api.onUpdate(()=>{
+        if(!anim) return;
+        const u=Math.min(1,(performance.now()-anim.t0)/2200);
+        const x=anim.h.x0+u*anim.h.w;
+        const y=400-u*anim.h.h;
+        walker.setAttribute('x',x); walker.setAttribute('y',y-12);
+        if(u>=1){ anim=null; if(h.slope===3) S.ding(); }
+      });
+    });
+  });
+}
+},
+{
+kid:'The integral asks: <span style="color:var(--blue)">how much has piled up?</span>',
+closer:'Each raindrop is tiny — almost nothing! But the bucket <b>adds every single drop</b>, and the total grows into something big. An integral is exactly that: adding up zillions of tiny pieces to get the whole amount.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#39466B'},scene);
+  E('text',{x:450,y:96,'font-size':84,'text-anchor':'middle',text:'🌧️'},scene);
+  E('path',{d:'M 330 200 L 570 200 L 540 430 L 360 430 Z',fill:'#C9D3E0',stroke:'var(--ink)','stroke-width':6},scene);
+  const clip=E('clipPath',{id:'bkClip'},scene);
+  E('path',{d:'M 334 204 L 566 204 L 537 427 L 363 427 Z'},clip);
+  const water=E('rect',{x:330,y:430,width:240,height:0,fill:'#7EC8F0','clip-path':'url(#bkClip)'},scene);
+  const total=label(scene,450,180,40,'#fff','0 drops');
+  const dropsG=E('g',{},scene);
+  let count=0, raining=false, dropT=0;
+  const rb=api.button('🌧️ HOLD to rain!','blue');
+  api.holdable(rb,()=>{raining=true;},()=>{raining=false;});
+  api.onUpdate((dt)=>{
+    dropT+=dt;
+    if(raining && dropT>0.08){
+      dropT=0; count++;
+      const d=E('text',{x:350+Math.random()*200,y:130,'font-size':22,'text-anchor':'middle',text:'💧'},dropsG);
+      d.style.transition='transform .5s linear, opacity .5s';
+      requestAnimationFrame(()=>{ d.style.transform='translateY('+(160+count%40)+'px)'; d.style.opacity=0; });
+      setTimeout(()=>d.remove(),520);
+      if(count%5===0) S.pop();
+      const h=Math.min(222,count*1.2);
+      water.setAttribute('y',430-h); water.setAttribute('height',h);
+      total.textContent=count+' drops';
+      if(count===50) api.setKid('50 tiny drops — already a puddle!');
+      if(count===120) api.setKid('Keep adding little bits… the total gets <span style="color:var(--blue)">BIG!</span>');
+      if(count>=185){ api.setKid('FULL! Tiny pieces + tiny pieces = <span style="color:var(--blue)">the whole bucket.</span> That\'s integrating!'); S.ding(); raining=false; }
+    }
+  });
+}
+},
+{
+kid:'Steps and staircases: they are <span style="color:var(--fuel)">opposites!</span>',
+closer:'Look at a staircase two ways. Ask "how big is EACH step?" — that\'s the derivative. Ask "how high am I in TOTAL?" — that\'s the integral. Each one undoes the other, like + and −, like ² and √. Calculus is just both questions together!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FFF3E0'},scene);
+  const stepH=46,stepW=88,n=6;
+  const stairsG=E('g',{},scene);
+  for(let i=0;i<n;i++){
+    E('rect',{x:150+i*stepW,y:420-(i+1)*stepH,width:stepW,height:(i+1)*stepH,fill:i%2?'#C88A4B':'#B57B40',stroke:'var(--ink)','stroke-width':4},stairsG);
+  }
+  const climber=E('text',{x:150+stepW/2,y:420-stepH-12,'font-size':44,'text-anchor':'middle',text:'🧗'},scene);
+  const stepTag=label(scene,450,70,34,'var(--car-dark)','each step: +46 high');
+  const totTag=label(scene,450,114,34,'#33689c','total height: 46');
+  const marksG=E('g',{},scene);
+  let pos=0;
+  function refresh(){
+    marksG.innerHTML='';
+    E('path',{d:'M '+(150+pos*stepW+stepW-14)+' '+(420-pos*stepH)+' l 0 '+(-stepH),stroke:'var(--car)','stroke-width':6,'stroke-linecap':'round'},marksG);
+    E('path',{d:'M 120 420 L 120 '+(420-(pos+1)*stepH),stroke:'var(--blue)','stroke-width':8,'stroke-linecap':'round'},marksG);
+    E('text',{x:104,y:420-(pos+1)*stepH/2,'font-size':22,'text-anchor':'middle','font-family':'Baloo 2','font-weight':800,fill:'#33689c',text:(pos+1)*stepH},marksG);
+    stepTag.textContent='DERIVATIVE view: each step = +'+stepH;
+    totTag.textContent='INTEGRAL view: total height = '+((pos+1)*stepH);
+    climber.setAttribute('x',150+pos*stepW+stepW/2);
+    climber.setAttribute('y',420-(pos+1)*stepH-12);
+  }
+  refresh();
+  const up=api.button('⬆️ Climb a step','go'), dn=api.button('⬇️ Step down','boom');
+  up.addEventListener('click',()=>{
+    if(pos>=n-1){ S.thud(); return; }
+    pos++; S.pop(); refresh();
+    api.setKid('Step size +'+stepH+' (derivative) … total now <span style="color:var(--blue)">'+((pos+1)*stepH)+'</span> (integral)!');
+  });
+  dn.addEventListener('click',()=>{
+    if(pos<=0){ S.thud(); return; }
+    pos--; S.pop(); refresh();
+    api.setKid('Going down subtracts a step — the total shrinks back. <span style="color:var(--fuel)">Opposites!</span>');
+  });
+}
+}];
+/* ======== CH 2 : ON A GRAPH ======== */
+const C_graph=[
+{
+kid:'Steepness ruler! Can you find where the slope is exactly <span style="color:var(--go)">0</span>?',
+closer:'Slide the hiker along the hill. The red <b>tangent line</b> touches the curve at one point and shows the slope right there — that number IS the derivative. Uphill = positive, downhill = negative… and somewhere there\'s a magic spot where it\'s exactly <b>zero</b>. Find it!',
+build(scene,api){
+  const G=api.graph({x:190,y:40,w:560,h:380,xmin:0,xmax:10,ymin:0,ymax:10,xlabel:'walk →',ylabel:'height'});
+  const f=x=>8-Math.pow(x-5,2)/3.2;
+  const fp=x=>-2*(x-5)/3.2;
+  const curve=G.path(f,{stroke:'var(--go)','stroke-width':7},0.5,9.5);
+  api.drawIn(curve,900);
+  const tan=E('line',{x1:0,y1:0,x2:0,y2:0,stroke:'var(--car)','stroke-width':6,'stroke-linecap':'round'},scene);
+  const hiker=E('text',{x:0,y:0,'font-size':38,'text-anchor':'middle',text:'🥾'},scene);
+  const tag=label(scene,450,36,32,'var(--car-dark)','slope = ?');
+  let foundTop=false;
+  function setX(x){
+    const y=f(x), m=fp(x);
+    const px=G.X(x), py=G.Y(y);
+    const dxw=1.6;
+    tan.setAttribute('x1',G.X(x-dxw)); tan.setAttribute('y1',G.Y(y-m*dxw));
+    tan.setAttribute('x2',G.X(x+dxw)); tan.setAttribute('y2',G.Y(y+m*dxw));
+    hiker.setAttribute('x',px); hiker.setAttribute('y',py-10);
+    const mv=Math.round(m*10)/10;
+    tag.textContent='slope = '+mv;
+    if(Math.abs(mv)<0.15){ tag.setAttribute('fill','var(--go-dark)');
+      if(!foundTop){ foundTop=true; S.tada(); }
+      api.setKid('🎯 The TOP! Slope = <span style="color:var(--go)">0</span> — for one instant, not going up or down!'); }
+    else if(mv>0){ tag.setAttribute('fill','var(--car-dark)');
+      api.setKid('Climbing! Slope +'+mv+' — height is growing.'); }
+    else { tag.setAttribute('fill','#b34e00');
+      api.setKid('Downhill! Slope '+mv+' — height is shrinking. Wheee!'); }
+  }
+  setX(2);
+  const sl=api.slider(0.5,9.5,2,0.1);
+  sl.addEventListener('input',()=>{ setX(+sl.value); S.whir(); });
+}
+},
+{
+kid:'Thin slices magically become <span style="color:var(--blue)">smooth area!</span>',
+closer:'We want the area under the curve — but it\'s curvy! Trick: fill it with rectangles and ADD them up. Chunky rectangles are a rough guess… but the thinner they get, the closer the sum comes to the true area. Infinitely thin = the exact <b>integral</b>!',
+build(scene,api){
+  const G=api.graph({x:190,y:40,w:560,h:380,xmin:0,xmax:8,ymin:0,ymax:10,xlabel:'x',ylabel:'y'});
+  const f=x=>1.5+x*x/9;
+  const rectsG=E('g',{},scene);
+  const curve=G.path(f,{stroke:'var(--go)','stroke-width':7});
+  const tag=label(scene,450,36,30,'#33689c','');
+  const exact=(v=>1.5*8+Math.pow(8,3)/27)();
+  let n=2;
+  function draw(){
+    rectsG.innerHTML='';
+    const w=8/n; let sum=0;
+    for(let i=0;i<n;i++){
+      const xm=i*w+w/2, h=f(xm); sum+=h*w;
+      E('rect',{x:G.X(i*w)+1,y:G.Y(h),width:G.X(w)-G.X(0)-2,height:G.Y(0)-G.Y(h),
+        fill:'rgba(95,168,232,.55)',stroke:'#33689c','stroke-width':2},rectsG);
+    }
+    tag.textContent=n+' slices → area ≈ '+sum.toFixed(1)+'   (true: '+exact.toFixed(1)+')';
+    return sum;
+  }
+  draw();
+  const sl=api.slider(2,40,2,1);
+  const lbl=api.button('2 slices','ghost'); lbl.style.pointerEvents='none';
+  sl.addEventListener('input',()=>{
+    n=+sl.value; lbl.textContent=n+' slices';
+    const sum=draw(); S.whir();
+    const off=Math.abs(sum-exact);
+    api.setKid(n<6?'Chunky slices — close-ish, but gaps stick out!':(n<20?'Thinner slices hug the curve better…':'So thin it\'s nearly <span style="color:var(--blue)">perfect</span> — off by only '+off.toFixed(2)+'!'));
+    if(n>=40) S.ding();
+  });
+}
+},
+{
+kid:'Area under SPEED = <span style="color:var(--fuel)">distance traveled!</span>',
+closer:'Here\'s the magic bridge between the two ideas. Zoomy drives at a steady 3 for t seconds. The graph makes a rectangle: 3 tall, t wide → area = 3 × t… which is EXACTLY how far Zoomy went! Area under the speed curve is always the distance.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'var(--sky)'},scene);
+  /* road strip on top */
+  E('rect',{y:60,width:900,height:60,fill:'var(--road)'},scene);
+  E('line',{x1:0,y1:90,x2:900,y2:90,stroke:'var(--stripe)','stroke-width':5,'stroke-dasharray':'28 24'},scene);
+  const car=E('text',{x:70,y:105,'font-size':40,'text-anchor':'middle',text:'🚗'},scene);
+  const dTag=label(scene,780,50,26,'var(--ink)','distance: 0');
+  const G=api.graph({x:190,y:170,w:560,h:260,xmin:0,xmax:8,ymin:0,ymax:5,xlabel:'time (s)',ylabel:'speed'});
+  G.numbers();
+  const area=E('rect',{x:G.X(0),y:G.Y(3),width:0,height:G.Y(0)-G.Y(3),fill:'rgba(245,166,35,.5)',stroke:'#c77f00','stroke-width':3},scene);
+  G.path(v=>3,{stroke:'var(--car)','stroke-width':7});
+  label(scene,G.X(7.2),G.Y(3)-14,22,'var(--car-dark)','speed = 3');
+  const aTag=label(scene,G.X(2),G.Y(1.4),30,'#7a4c00','');
+  const sl=api.slider(0,8,0,0.5);
+  const lbl=api.button('t = 0 s','ghost'); lbl.style.pointerEvents='none';
+  sl.addEventListener('input',()=>{
+    const t=+sl.value;
+    lbl.textContent='t = '+t+' s';
+    area.setAttribute('width',G.X(t)-G.X(0));
+    aTag.textContent=t>0?('area = 3 × '+t+' = '+(3*t)):'';
+    aTag.setAttribute('x',G.X(Math.max(1.4,t/2)));
+    car.setAttribute('x',70+(3*t)/24*760);
+    dTag.textContent='distance: '+(3*t);
+    S.whir();
+    api.setKid(t===0?'Slide time forward and watch the rectangle grow!':'After '+t+'s: rectangle area = <span style="color:var(--fuel)">'+(3*t)+'</span> = exactly Zoomy\'s distance!');
+    if(t>=8){ S.honk(); }
+  });
+}
+}];
+/* ======== CH 3 : REAL WORLD (Zoomy's dashboard!) ======== */
+const C_world=[
+{
+kid:'The <span style="color:var(--car)">speedometer</span> is a derivative machine!',
+closer:'Zoomy\'s position keeps changing. The speedometer answers one question: <b>how fast is position changing RIGHT NOW?</b> That\'s a live derivative, computed on your dashboard every moment you drive!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'var(--sky)'},scene);
+  E('rect',{y:300,width:900,height:80,fill:'var(--road)'},scene);
+  E('line',{x1:0,y1:340,x2:900,y2:340,stroke:'var(--stripe)','stroke-width':6,'stroke-dasharray':'36 30'},scene);
+  E('rect',{y:380,width:900,height:100,fill:'var(--grass)'},scene);
+  const car=E('text',{x:80,y:322,'font-size':52,'text-anchor':'middle',text:'🚗'},scene);
+  const meter=gauge(scene,450,200,110,'SPEEDOMETER = derivative of position');
+  const sVal=label(scene,450,150,42,'var(--car-dark)','0');
+  const pTag=label(scene,450,440,26,'#2c5c38','position: 0 m');
+  let speed=0,posn=0,pedal=false;
+  const pb=api.button('🦶 HOLD the pedal!','go');
+  api.holdable(pb,()=>{pedal=true;},()=>{pedal=false;});
+  let vroomT=0;
+  api.onUpdate((dt)=>{
+    speed+=((pedal?5:0)-speed)*Math.min(1,dt*1.6);
+    if(speed<0.02) speed=0;
+    posn+=speed*dt*8;
+    const x=80+(posn%760);
+    car.setAttribute('x',x);
+    meter.set(speed/5.5);
+    sVal.textContent=Math.round(speed*10)/10;
+    pTag.textContent='position: '+Math.round(posn)+' m';
+    vroomT+=dt;
+    if(pedal&&vroomT>0.24){ vroomT=0; S.whir(); }
+    if(speed>0.2&&!pedal) api.setKid('Pedal off → speed falls toward <span style="color:var(--car)">0</span>. Position still changes, just slower!');
+    else if(speed>4.5) api.setKid('Top speed! Position changing <span style="color:var(--car)">super fast</span> — big derivative!');
+    else if(pedal) api.setKid('Needle rising — position changing faster and faster!');
+  });
+}
+},
+{
+kid:'The <span style="color:var(--blue)">odometer</span> is an integral machine!',
+closer:'While the speedometer looks at right-now, the odometer quietly <b>adds up every tiny bit of road</b> you\'ve ever rolled over. Adding millions of little pieces into one total = integrating. Your car does calculus on every trip!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'var(--sky)'},scene);
+  E('rect',{y:310,width:900,height:80,fill:'var(--road)'},scene);
+  E('line',{x1:0,y1:350,x2:900,y2:350,stroke:'var(--stripe)','stroke-width':6,'stroke-dasharray':'36 30'},scene);
+  E('rect',{y:390,width:900,height:90,fill:'var(--grass)'},scene);
+  const car=E('text',{x:80,y:332,'font-size':52,'text-anchor':'middle',text:'🚗'},scene);
+  /* odometer display */
+  E('rect',{x:290,y:90,width:320,height:90,rx:16,fill:'var(--ink)',stroke:'var(--metal-dark)','stroke-width':6},scene);
+  const odo=label(scene,450,150,54,'#7CFC9B','000000');
+  label(scene,450,66,26,'#54607a','ODOMETER = integral of speed');
+  const bitsG=E('g',{},scene);
+  let speed=0,dist=0,pedal=false,bitT=0;
+  const pb=api.button('🦶 HOLD to drive!','go');
+  const rst=api.button('🔄 New trip','ghost');
+  api.holdable(pb,()=>{pedal=true;},()=>{pedal=false;});
+  rst.addEventListener('click',()=>{ dist=0; S.pop(); });
+  api.onUpdate((dt)=>{
+    speed+=((pedal?5:0)-speed)*Math.min(1,dt*1.6);
+    if(speed<0.02) speed=0;
+    const piece=speed*dt*8;
+    dist+=piece;
+    car.setAttribute('x',80+(dist%760));
+    odo.textContent=String(Math.floor(dist)).padStart(6,'0');
+    bitT+=dt;
+    if(speed>0.3&&bitT>0.3){
+      bitT=0;
+      const b=E('text',{x:+car.getAttribute('x')-30,y:300,'font-size':20,'text-anchor':'middle','font-family':'Baloo 2','font-weight':800,fill:'#33689c',text:'+'+piece.toFixed(1)},bitsG);
+      b.style.transition='transform 1s, opacity 1s';
+      requestAnimationFrame(()=>{ b.style.transform='translateY(-90px)'; b.style.opacity=0; });
+      setTimeout(()=>b.remove(),1050);
+      S.pop();
+    }
+    if(dist>0&&speed<0.1) api.setKid('Stopped — but the odometer <span style="color:var(--blue)">remembers every piece</span>. Integrals never forget!');
+    else if(speed>0.3) api.setKid('Every moment adds a tiny "+bit" of road… the total only grows!');
+  });
+}
+},
+{
+kid:'One drive, both ideas: <span style="color:var(--car)">slope</span> and <span style="color:var(--blue)">area</span> together!',
+closer:'Drive and watch both graphs draw themselves. The <b>distance</b> curve is steep exactly when <b>speed</b> is high — speed is the slope of distance (derivative). And distance is the area piling up under speed (integral). Two views, one drive. That\'s calculus!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#F2EEE4'},scene);
+  const GL=api.graph({x:80,y:80,w:340,h:300,xmin:0,xmax:12,ymin:0,ymax:6,xlabel:'time',ylabel:'SPEED',xstep:2});
+  const GR=api.graph({x:520,y:80,w:340,h:300,xmin:0,xmax:12,ymin:0,ymax:220,xlabel:'time',ylabel:'DISTANCE',xstep:2,ystep:44});
+  label(scene,250,50,26,'var(--car-dark)','speed (derivative view)');
+  label(scene,690,50,26,'#33689c','distance (integral view)');
+  const areaG=E('g',{},scene);
+  const spPath=E('path',{fill:'none',stroke:'var(--car)','stroke-width':5,'stroke-linecap':'round'},scene);
+  const dsPath=E('path',{fill:'none',stroke:'var(--blue)','stroke-width':5,'stroke-linecap':'round'},scene);
+  let t=0,speed=0,dist=0,pedal=false,done=false;
+  let dSp='',dDs='',fillT=0;
+  const pb=api.button('🦶 HOLD & release — make hills!','go');
+  const rb=api.button('🔄 Again','ghost');
+  api.holdable(pb,()=>{pedal=true;},()=>{pedal=false;});
+  function reset(){ t=0;speed=0;dist=0;done=false;dSp='';dDs='';areaG.innerHTML='';
+    spPath.setAttribute('d',''); dsPath.setAttribute('d','');
+    api.setKid('One drive, both ideas: <span style="color:var(--car)">slope</span> and <span style="color:var(--blue)">area</span> together!'); }
+  rb.addEventListener('click',()=>{ S.pop(); reset(); });
+  api.onUpdate((dt)=>{
+    if(done) return;
+    speed+=((pedal?5:0)-speed)*Math.min(1,dt*2);
+    t+=dt; dist+=speed*dt*3.2;
+    if(t>=12){ done=true; S.tada();
+      api.setKid('Beautiful! Steep <span style="color:var(--blue)">distance</span> exactly where <span style="color:var(--car)">speed</span> was high. You just SAW calculus!');
+      return; }
+    const sx=GL.X(t), sy=GL.Y(Math.min(6,speed));
+    const dx=GR.X(t), dy=GR.Y(Math.min(220,dist));
+    dSp+=(dSp?' L ':'M ')+sx.toFixed(1)+' '+sy.toFixed(1);
+    dDs+=(dDs?' L ':'M ')+dx.toFixed(1)+' '+dy.toFixed(1);
+    spPath.setAttribute('d',dSp);
+    dsPath.setAttribute('d',dDs);
+    fillT+=dt;
+    if(fillT>0.22){
+      fillT=0;
+      E('rect',{x:sx-3,y:sy,width:6,height:GL.Y(0)-sy,fill:'rgba(232,80,58,.25)'},areaG);
+      if(pedal) S.whir();
+    }
+  });
+}
+}];
+registerLesson('calc',[
+{stages:C_num, qa:[
+  {q:'What IS a derivative, really?', a:'It is the answer to "how fast is this changing right now?" The steepness of the hill under your feet, the speed on the dial this second. Not the total, not the past — the rate of change at this very moment.'},
+  {q:'What IS an integral, really?', a:'It is the answer to "how much has piled up in total?" Add up every raindrop, every tiny step, every little bit — the integral is the grand total that all the tiny pieces build.'},
+  {q:'Why are they opposites?', a:'Look at the staircase both ways. The size of each step is the derivative. The height you have climbed is the integral. If you know every step, you can find the height — and if you watch the height, you can find each step. Each one undoes the other.'}
+]},
+{stages:C_graph, qa:[
+  {q:'What is a tangent line?', a:'A straight line that just kisses the curve at one single point, leaning exactly the way the curve leans right there. Its tilt IS the derivative at that point — a tiny steepness ruler.'},
+  {q:'Why do thinner slices work better?', a:'A fat rectangle pokes out past the curve or leaves gaps under it. Thin ones hug the curve tighter, so the error shrinks. Make them thinner forever and the error melts away to nothing — that limit is the exact integral.'},
+  {q:'Why does area equal distance?', a:'The rectangle under the speed line is height times width — and that is speed times time, which is exactly distance! It works for bumpy speeds too: pile up thin slices of speed-times-a-moment and you get the whole trip.'}
+]},
+{stages:C_world, qa:[
+  {q:'Does my car really do calculus?', a:'It truly does! The speedometer measures how fast your position is changing right now — a live derivative. The odometer adds up every little bit of road forever — a patient integral. Two dials, two halves of calculus.'},
+  {q:'What if the speed keeps changing?', a:'No problem — the odometer never asks the speed to hold still. It just keeps adding whatever tiny bit of road each moment brings. Fast moments add big bits, slow moments add small ones.'},
+  {q:'Where else does this show up?', a:'Your heart: beats per minute is a rate, total heartbeats is an integral. Rain: how hard it falls versus how full the bucket gets. Your phone battery: how fast it drains versus how much is left. Change and total — they are everywhere, always in pairs.'}
+]}]);
+})();
+/* ================================================================
+   BOOT
+================================================================ */
+resize();
+updateStarHud();
+requestAnimationFrame(drawTree);
+/* tiny hook for automated testing & tinkering (harmless in normal use) */
+window.__LT={ openLesson:openLesson, closeLesson:closeLesson, TOPICS:TOPICS, LESSONS:LESSONS,
+  cam:cam, flyTo:flyTo, BRIDGES:BRIDGES, progress:()=>progress };
+/* PWA: works offline after first visit when hosted (no-op when opened as a plain file) */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
+}
+})();
+</script>
+</body>
+</html>
