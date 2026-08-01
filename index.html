@@ -325,51 +325,73 @@ function loadProgress(){ try{ const s=localStorage.getItem(PKEY); return s?JSON.
 function saveProgress(p){ try{ localStorage.setItem(PKEY,JSON.stringify(p)); }catch(e){ memStore=p; } }
 let progress=loadProgress();
 function starTotal(){ return Object.keys(progress).filter(k=>progress[k]).length; }
-function updateStarHud(){ document.getElementById('starCount').textContent='⭐ '+starTotal()+'/12'; }
+function starMax(){ return TOPICS.reduce((s,t)=>s+t.sections.length,0); }
+function updateStarHud(){ document.getElementById('starCount').textContent='⭐ '+starTotal()+'/'+starMax(); }
 /* ================================================================
    TOPIC / CHAPTER DATA
 ================================================================ */
-const CHAPTER_DEFS=[
-  {id:'num',   label:'How the Numbers Work', tree:'Numbers', emoji:'🔢'},
-  {id:'graph', label:'On a Graph',           tree:'Graph',   emoji:'📈'},
-  {id:'world', label:'In the Real World',    tree:'Real World', emoji:'🌍'}
+/* Textbook structure: MATH → numbered chapters → numbered sections (3.1, 3.2, …) */
+function stdSections(n){
+  return [
+    {id:'s1', num:n+'.1', title:'How the Numbers Work', emoji:'🔢'},
+    {id:'s2', num:n+'.2', title:'On a Graph',           emoji:'📈'},
+    {id:'s3', num:n+'.3', title:'In the Real World',    emoji:'🌍'}
+  ];
+}
+const SEC3=[
+  {id:'s1', num:'3.1', title:'What Addition Really Is',      emoji:'🍎'},
+  {id:'s2', num:'3.2', title:'Order Doesn\'t Matter',        emoji:'🚂'},
+  {id:'s3', num:'3.3', title:'What Subtraction Really Is',   emoji:'🍪'},
+  {id:'s4', num:'3.4', title:'Fact Families',                emoji:'🔺'},
+  {id:'s5', num:'3.5', title:'Adding Bigger Numbers',        emoji:'🧱'},
+  {id:'s6', num:'3.6', title:'Subtracting Bigger Numbers',   emoji:'🔁'},
+  {id:'s7', num:'3.7', title:'Mental Math: Making Tens',     emoji:'🧠'},
+  {id:'s8', num:'3.8', title:'Word Problems',                emoji:'📖'},
+  {id:'s9', num:'3.9', title:'On a Graph',                   emoji:'📈'},
+  {id:'s10',num:'3.10',title:'In the Real World',            emoji:'🌍'}
 ];
 const TOPICS=[
-  {id:'addsub',  label:'Add & Subtract',          short:'Add · Subtract',  emoji:'🍎', color:'#37B45F',
-   desc:'Putting together and taking away — where all of math begins!', pos:[-52,0,28]},
-  {id:'muldiv',  label:'Multiply & Divide',       short:'Multiply · Divide', emoji:'🍪', color:'#5FA8E8',
-   desc:'Adding in big jumps, and sharing things out fairly.', pos:[44,80,-18]},
-  {id:'exproot', label:'Exponents & Square Roots', short:'Powers · Roots', emoji:'🚀', color:'#F5A623',
-   desc:'Numbers that grow super fast — and how to shrink them back.', pos:[-64,160,-30]},
-  {id:'calc',    label:'Derivatives & Integrals', short:'Change · Adding up', emoji:'🎢', color:'#E8503A',
-   desc:'The math of change: how fast things move, and adding tiny pieces.', pos:[52,238,26]}
+  {chNum:3, id:'addsub',  label:'Addition & Subtraction',   short:'Add · Subtract',  emoji:'🍎', color:'#37B45F',
+   desc:'Putting together, taking apart, and the big idea that connects them.', pos:[-52,30,28], sections:SEC3},
+  {chNum:4, id:'muldiv',  label:'Multiplication & Division', short:'Multiply · Divide', emoji:'🍪', color:'#5FA8E8',
+   desc:'Adding in big jumps, and sharing things out fairly.', pos:[60,125,-18], sections:stdSections(4)},
+  {chNum:5, id:'exproot', label:'Exponents & Square Roots', short:'Powers · Roots', emoji:'🚀', color:'#F5A623',
+   desc:'Numbers that grow super fast — and how to shrink them back.', pos:[-70,210,-30], sections:stdSections(5)},
+  {chNum:6, id:'calc',    label:'Derivatives & Integrals', short:'Change · Adding up', emoji:'🎢', color:'#E8503A',
+   desc:'The math of change: how fast things move, and adding tiny pieces.', pos:[55,295,26], sections:stdSections(6)}
 ];
-const CH_OFFSETS=[[-34,20,16],[2,34,-22],[36,20,16]];
 /* build node list */
 const nodes=[];
 const mathRoot={kind:'root', id:'mathRoot', label:'MATH', emoji:'🌱', color:'#8ED081', pos:[0,-58,8], r:20};
 nodes.push(mathRoot);
+/* chapters 1 & 2 exist in the book but aren't built yet — shown as ghosts so the numbering makes sense */
+const ghostCh1={kind:'ghost', id:'gCh1', label:'Ch 1 · Counting (soon)',    emoji:'🔢', color:'#8ED081', pos:[95,-25,-30], r:12};
+const ghostCh2={kind:'ghost', id:'gCh2', label:'Ch 2 · Place Value (soon)', emoji:'💯', color:'#8ED081', pos:[-115,-10,-45], r:12};
+nodes.push(ghostCh1, ghostCh2);
 TOPICS.forEach(t=>{
-  const tn={kind:'topic', id:t.id, topic:t, label:t.label, emoji:t.emoji, color:t.color, pos:t.pos, r:17};
+  const tn={kind:'topic', id:t.id, topic:t, label:'Ch '+t.chNum+' · '+t.short, emoji:t.emoji, color:t.color, pos:t.pos, r:17};
   nodes.push(tn); t.node=tn;
-  t.chNodes=CHAPTER_DEFS.map((c,i)=>{
+  const N=t.sections.length;
+  const R=N>6?68:38;
+  t.chNodes=t.sections.map((c,i)=>{
+    const a=(i/N)*Math.PI*2 - Math.PI/2;
     const n={kind:'chapter', id:t.id+'.'+c.id, topic:t, chapter:c, chIndex:i,
-      label:c.tree, emoji:c.emoji, color:t.color,
-      pos:[t.pos[0]+CH_OFFSETS[i][0], t.pos[1]+CH_OFFSETS[i][1], t.pos[2]+CH_OFFSETS[i][2]], r:10};
+      label:c.num, emoji:c.emoji, color:t.color,
+      pos:[t.pos[0]+Math.cos(a)*R, t.pos[1]+Math.sin(a)*R*0.8, t.pos[2]+Math.sin(a*2)*16], r:N>6?8.5:10};
     nodes.push(n); return n;
   });
 });
-const sciRoot={kind:'ghostRoot', id:'sciRoot', label:'SCIENCE · growing soon', emoji:'🔬', color:'#B08BD9', pos:[185,55,-70], r:18};
+const sciRoot={kind:'ghostRoot', id:'sciRoot', label:'SCIENCE · growing soon', emoji:'🔬', color:'#B08BD9', pos:[210,90,-70], r:18};
 nodes.push(sciRoot);
-[['Physics','⚛️',[150,235,-30]],['Chemistry','🧪',[215,140,-85]],['Biology','🌿',[-150,215,-70]]].forEach(g=>{
+[['Physics','⚛️',[175,300,-30]],['Chemistry','🧪',[245,190,-85]],['Biology','🌿',[-185,275,-70]]].forEach(g=>{
   nodes.push({kind:'ghost', id:'g'+g[0], label:g[0], emoji:g[1], color:'#B08BD9', pos:g[2], r:11});
 });
 /* shared-concept bridge nodes: where math and science hold hands */
 const BRIDGES=[
-  {id:'br-growth', label:'Growth', emoji:'🦠', color:'#9BCB3B', pos:[-118,192,-52],
+  {id:'br-growth', label:'Growth', emoji:'🦠', color:'#9BCB3B', pos:[-135,245,-50],
    topicIdx:2, chIdx:2, ghostId:'gBiology',
    blurb:'Where exponents meet biology — living things grow by doubling!'},
-  {id:'br-motion', label:'Motion', emoji:'🏎️', color:'#E86FA4', pos:[104,240,-4],
+  {id:'br-motion', label:'Motion', emoji:'🏎️', color:'#E86FA4', pos:[118,298,-4],
    topicIdx:3, chIdx:2, ghostId:'gPhysics',
    blurb:'Where calculus meets physics — speed, distance and change!'}
 ];
@@ -379,7 +401,9 @@ BRIDGES.forEach(b=>{
   b.chRef=TOPICS[b.topicIdx].chNodes[b.chIdx];
 });
 const edges=[];
-edges.push([mathRoot, TOPICS[0].node]);
+edges.push([mathRoot, ghostCh1]);
+edges.push([ghostCh1, ghostCh2]);
+edges.push([ghostCh2, TOPICS[0].node]);
 for(let i=0;i<TOPICS.length-1;i++) edges.push([TOPICS[i].node, TOPICS[i+1].node]);
 TOPICS.forEach(t=>t.chNodes.forEach(c=>edges.push([t.node,c,true])));
 edges.push([sciRoot, nodes.find(n=>n.id==='gPhysics'), true]);
@@ -405,8 +429,8 @@ function resize(){
 window.addEventListener('resize',resize);
 const stars=[];
 for(let i=0;i<170;i++) stars.push({x:Math.random(), y:Math.random(), r:Math.random()*1.4+.3, tw:Math.random()*6.28, sp:.5+Math.random()});
-const cam={ yaw:-0.5, pitch:0.22, dist:500, target:[8,100,0] };
-const HOME={target:[8,100,0], dist:500};
+const cam={ yaw:-0.5, pitch:0.22, dist:580, target:[0,135,0] };
+const HOME={target:[0,135,0], dist:580};
 let camAnim=null;
 function flyTo(target,dist,yaw,ms,done){
   const from={t:[...cam.target], d:cam.dist, y:cam.yaw, p:cam.pitch};
@@ -648,9 +672,9 @@ function handleTap(x,y){
     flashHint('✨ Floating into <b>'+n.label+'</b>…');
     flyTo(n.pos,58,null,1050);
   } else if(n.kind==='topic'){
-    flashHint(n.emoji+' <b>'+n.label+'</b> — '+n.topic.desc);
-    speak(n.label+'. '+n.topic.desc+' Float into one of the bubbles around it!');
-    flyTo(n.pos.map((v,i)=>i===1?v+14:v),300,null,800);
+    flashHint(n.emoji+' <b>Chapter '+n.topic.chNum+': '+n.topic.label+'</b> — '+n.topic.desc);
+    speak('Chapter '+n.topic.chNum+': '+n.topic.label+'. '+n.topic.desc+' Float into one of the numbered bubbles around it!');
+    flyTo(n.pos.map((v,i)=>i===1?v+14:v),320,null,800);
   } else if(n.kind==='root'){
     flashHint('🌱 The MATH web — everything grows from adding!');
     flyTo(HOME.target,HOME.dist,null,800);
@@ -752,7 +776,7 @@ function openLesson(chNode){
   lessonScreen.style.animation='fadeIn .4s ease';
   lessonScreen.classList.add('show');
   document.getElementById('lessonTitle').textContent=
-    chNode.topic.emoji+' '+chNode.topic.short+' · '+chNode.chapter.emoji+' '+chNode.chapter.label;
+    chNode.topic.emoji+' '+chNode.chapter.num+' · '+chNode.chapter.title;
   const dots=document.getElementById('stageDots');
   dots.innerHTML='';
   cur.stages.forEach(()=>dots.appendChild(document.createElement('span')));
@@ -955,17 +979,17 @@ function finishChapter(){
   S.tada(); confettiBurst();
   document.getElementById('celebrateTitle').textContent=first?'You earned a star!':'Star polished! ✨';
   document.getElementById('celebrateDesc').textContent=
-    n.topic.label+' — '+n.chapter.label+' complete! '+(starTotal())+' of 12 stars are shining.';
+    'Section '+n.chapter.num+' — '+n.chapter.title+' complete! '+(starTotal())+' of '+starMax()+' stars are shining.';
   const nextBtn=document.getElementById('celebNextBtn');
   let nextNode=null;
-  if(n.chIndex<2) nextNode=n.topic.chNodes[n.chIndex+1];
+  if(n.chIndex<n.topic.chNodes.length-1) nextNode=n.topic.chNodes[n.chIndex+1];
   else{
     const ti=TOPICS.indexOf(n.topic);
     if(ti<TOPICS.length-1) nextNode=TOPICS[ti+1].chNodes[0];
   }
   if(nextNode){
     nextBtn.style.display='';
-    nextBtn.textContent='Next: '+nextNode.chapter.emoji+' '+(nextNode.topic===n.topic?nextNode.chapter.label:nextNode.topic.short);
+    nextBtn.textContent='Next: '+nextNode.chapter.num+' '+(nextNode.topic===n.topic?nextNode.chapter.title:nextNode.topic.short);
     nextBtn.onclick=()=>{ document.getElementById('celebrate').classList.remove('show'); teardownStage(); openLesson(nextNode); };
   } else nextBtn.style.display='none';
   document.getElementById('celebrate').classList.add('show');
@@ -1383,20 +1407,692 @@ build(scene,api){
     api.setKid('Blue scores! The <span style="color:var(--blue)">difference</span> is '+Math.abs(r-b)+'.'); });
 }
 }];
+/* ===================================================================
+   CHAPTER 3 SECTIONS — built from the textbook chapter
+=================================================================== */
+function wrapText(g,txt,cx,y0,size,maxChars){
+  g.innerHTML='';
+  const words=String(txt).split(' '); const lines=[]; let line='';
+  words.forEach(w=>{ if((line+' '+w).trim().length>maxChars){ lines.push(line.trim()); line=w; } else line+=' '+w; });
+  if(line.trim()) lines.push(line.trim());
+  lines.forEach((l,i)=>label(g,cx,y0+i*(size*1.3),size,'var(--ink)',l));
+}
+function shuffle(a){ return a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(p=>p[1]); }
+/* ---- generic Try It quiz stage ---- */
+function quizStage(secNum,questions){
+return {
+kid:'Try It '+secNum+'! ⭐',
+closer:'Tap the answer you think is right — wrong guesses are how brains grow! Tap 🧑‍🏫 any time to hear the question read aloud, or ❓ to ask about the idea.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FFF9EF'},scene);
+  E('rect',{x:70,y:90,width:760,height:280,rx:24,fill:'#fff',stroke:'var(--ink)','stroke-width':5},scene);
+  const qNum=label(scene,450,60,28,'#a06a2c','');
+  const qTxt=E('g',{},scene);
+  const fb=label(scene,450,430,30,'var(--go-dark)','');
+  const art=E('text',{x:450,y:330,'font-size':84,'text-anchor':'middle',text:'🤔'},scene);
+  let qi=0, alive=true;
+  api.onCleanup(()=>{ alive=false; });
+  function renderQ(){
+    const q=questions[qi];
+    qNum.textContent='Question '+(qi+1)+' of '+questions.length;
+    wrapText(qTxt,q.q,450,150,30,46);
+    fb.textContent=''; art.textContent='🤔';
+    const row=document.getElementById('controlsRow');
+    row.innerHTML='';
+    shuffle([...q.choices]).forEach(c=>{
+      const b=api.button(String(c),'blue');
+      b.addEventListener('click',()=>{
+        if(String(c)===String(q.a)){
+          S.ding(); art.textContent='🎉'; fb.textContent='✓ '+(q.why||'Correct!');
+          api.setKid('YES! '+(q.why||''));
+          [...row.children].forEach(x=>x.disabled=true);
+          setTimeout(()=>{ if(!alive) return; qi++; if(qi<questions.length) renderQ(); else finish(); },1700);
+        } else {
+          S.thud(); b.style.opacity=.35; art.textContent='🙈';
+          fb.textContent='Not quite — look again!';
+        }
+      });
+    });
+    api.setKid(q.q);
+  }
+  function finish(){
+    S.tada(); art.textContent='🏆'; qNum.textContent='';
+    wrapText(qTxt,'All '+questions.length+' solved — amazing!',450,180,38,26);
+    fb.textContent='';
+    document.getElementById('controlsRow').innerHTML='';
+    api.setKid('Try It '+secNum+' complete! 🏆 Tap Finish ⭐ for your star!');
+  }
+  renderQ();
+}
+};
+}
+/* ---- 3.1 stage: the equals sign is a balance (VISUAL 3.2) ---- */
+const st_balance={
+kid:'The <span style="color:var(--fuel)">=</span> sign is a balance, not "the answer goes here"!',
+closer:'= means "both sides are the SAME AMOUNT". That\'s why 5 = 3 + 2 and 4 + 1 = 3 + 2 are perfectly true sentences. If you think of = as level scale pans, you\'ll never be confused.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#F3EEFB'},scene);
+  const eq=label(scene,450,60,44,'var(--ink)','0 vs 0');
+  E('path',{d:'M 410 420 L 490 420 L 450 330 Z',fill:'var(--metal)',stroke:'var(--ink)','stroke-width':5},scene);
+  const beamG=E('g',{},scene);
+  beamG.style.transformOrigin='450px 330px';
+  beamG.style.transition='transform .6s cubic-bezier(.3,1.3,.4,1)';
+  E('line',{x1:190,y1:330,x2:710,y2:330,stroke:'var(--ink)','stroke-width':10,'stroke-linecap':'round'},beamG);
+  const panL=E('g',{},beamG), panR=E('g',{},beamG);
+  E('path',{d:'M 150 350 Q 210 400 270 350',fill:'#C9D3E0',stroke:'var(--ink)','stroke-width':5},panL);
+  E('path',{d:'M 630 350 Q 690 400 750 350',fill:'#C9D3E0',stroke:'var(--ink)','stroke-width':5},panR);
+  const blocksL=E('g',{},panL), blocksR=E('g',{},panR);
+  let L=0,R=0,balancedAt=0;
+  function draw(){
+    blocksL.innerHTML=''; blocksR.innerHTML='';
+    for(let i=0;i<L;i++) E('rect',{x:180+(i%3)*32,y:318-Math.floor(i/3)*32,width:28,height:28,rx:6,fill:'var(--car)',stroke:'var(--ink)','stroke-width':3},blocksL);
+    for(let i=0;i<R;i++) E('rect',{x:660+(i%3)*32,y:318-Math.floor(i/3)*32,width:28,height:28,rx:6,fill:'var(--blue)',stroke:'var(--ink)','stroke-width':3},blocksR);
+    const tilt=Math.max(-14,Math.min(14,(L-R)*5));
+    beamG.style.transform='rotate('+(-tilt)+'deg)';
+    if(L===R&&L>0){
+      eq.textContent=L+' = '+R+'  — LEVEL!';
+      api.setKid('Level! <span style="color:var(--go)">'+L+' = '+R+'</span> — both sides are the same amount!');
+      if(balancedAt!==L){ balancedAt=L; S.ding(); }
+    } else {
+      eq.textContent=L+' vs '+R;
+      if(L+R>0) api.setKid((L>R?'Left':'Right')+' side is heavier — the = sign would NOT be true yet!');
+    }
+  }
+  draw();
+  const bl=api.button('+1 🟥 left',''), br=api.button('+1 🟦 right','blue'), rs=api.button('🔄','ghost');
+  bl.addEventListener('click',()=>{ if(L>=9){S.thud();return;} L++; S.pop(); draw(); });
+  br.addEventListener('click',()=>{ if(R>=9){S.thud();return;} R++; S.pop(); draw(); });
+  rs.addEventListener('click',()=>{ L=0;R=0;balancedAt=0; S.pop(); draw();
+    api.setKid('The <span style="color:var(--fuel)">=</span> sign is a balance, not "the answer goes here"!'); });
+}
+};
+/* ---- 3.2 stage: the flip train (VISUAL 3.3) ---- */
+const st_train={
+kid:'Flip the train — <span style="color:var(--blue)">same length!</span>',
+closer:'2 + 7 and 7 + 2 are the SAME train turned around — that\'s the commutative property. Why care? Speed! Counting on from the bigger number (8, 9!) beats counting on from the smaller one every time.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#E8F6FF'},scene);
+  const eq=label(scene,450,70,48,'var(--ink)','2 + 7 = 9');
+  let a=2,b=7,flipped=false;
+  const trainG=E('g',{},scene);
+  trainG.style.transformOrigin='450px 270px';
+  trainG.style.transition='transform .7s cubic-bezier(.3,1.2,.4,1)';
+  function draw(){
+    trainG.innerHTML='';
+    const n=a+b, cw=Math.min(64,600/n);
+    const x0=450-n*cw/2;
+    E('line',{x1:x0-12,y1:180,x2:x0-12,y2:360,stroke:'#7c8ba8','stroke-width':4,'stroke-dasharray':'10 8'},scene);
+    E('line',{x1:x0+n*cw+12,y1:180,x2:x0+n*cw+12,y2:360,stroke:'#7c8ba8','stroke-width':4,'stroke-dasharray':'10 8'},scene);
+    const order=flipped?[['var(--blue)',b],['var(--car)',a]]:[['var(--car)',a],['var(--blue)',b]];
+    let i=0;
+    order.forEach(([col,cnt])=>{
+      for(let k=0;k<cnt;k++){
+        E('rect',{x:x0+i*cw+3,y:240,width:cw-6,height:cw-6,rx:8,fill:col,stroke:'var(--ink)','stroke-width':4},trainG);
+        E('circle',{cx:x0+i*cw+cw*0.3,cy:240+cw+2,r:6,fill:'var(--ink)'},trainG);
+        E('circle',{cx:x0+i*cw+cw*0.7,cy:240+cw+2,r:6,fill:'var(--ink)'},trainG);
+        i++;
+      }
+    });
+    eq.textContent=flipped?(b+' + '+a+' = '+n):(a+' + '+b+' = '+n);
+  }
+  draw();
+  const fl=api.button('🔄 FLIP the train!','go'), add=api.button('+ 🟦','ghost');
+  fl.addEventListener('click',()=>{
+    S.woosh();
+    trainG.style.transform='rotate(180deg)';
+    setTimeout(()=>{
+      flipped=!flipped;
+      trainG.style.transition='none'; trainG.style.transform='rotate(0deg)';
+      draw();
+      setTimeout(()=>{ trainG.style.transition='transform .7s cubic-bezier(.3,1.2,.4,1)'; },30);
+      S.ding();
+      api.setKid('Same train, same <span style="color:var(--blue)">'+(a+b)+'</span> — just turned around! '+(flipped?b+' + '+a:a+' + '+b)+' works both ways.');
+    },720);
+  });
+  add.addEventListener('click',()=>{ if(b>=8){S.thud();return;} b++; S.pop(); draw(); });
+}
+};
+/* ---- 3.3 stage: cross-out cookies (VISUAL 3.4) ---- */
+const st_crossout={
+kid:'Cross them out — they\'re <span style="color:var(--boom)">still there to check!</span>',
+closer:'7 − 3 = 4. The 7 is where you started, 3 got crossed out, 4 remain — the <b>difference</b>. Crossed-out cookies stay visible, so you can always re-count the start AND the answer in one picture.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FFF3E0'},scene);
+  const eq=label(scene,450,64,48,'var(--ink)','7 − 0 = 7');
+  label(scene,450,108,24,'#a06a2c','Tap cookies to cross them out');
+  let crossed=0;
+  const items=[];
+  function build(){
+    items.forEach(i=>{i.c.remove(); i.x&&i.x.remove();}); items.length=0; crossed=0;
+    for(let i=0;i<7;i++){
+      const x=170+i*94, y=260;
+      const c=E('text',{x:x,y:y,'font-size':64,'text-anchor':'middle',text:'🍪'},scene);
+      c.style.cursor='pointer';
+      const item={c:c,x:null,done:false};
+      c.addEventListener('pointerdown',()=>{
+        if(item.done) return; item.done=true; crossed++;
+        item.x=E('text',{x:x,y:y+6,'font-size':74,'text-anchor':'middle',fill:'var(--car)',text:'✗','font-family':'Baloo 2','font-weight':800},scene);
+        S.thud();
+        eq.textContent='7 − '+crossed+' = '+(7-crossed);
+        api.setKid(crossed<7?'7 − '+crossed+' = <span style="color:var(--boom)">'+(7-crossed)+'</span> — and you can still SEE all 7!':'All crossed out! 7 − 7 = 0 … but the picture still shows the whole story!');
+        if(crossed===7) S.ding();
+      });
+      items.push(item);
+    }
+    eq.textContent='7 − 0 = 7';
+  }
+  build();
+  const rs=api.button('🔄 Fresh cookies!','ghost');
+  rs.addEventListener('click',()=>{ S.pop(); build();
+    api.setKid('Cross them out — they\'re <span style="color:var(--boom)">still there to check!</span>'); });
+}
+};
+/* ---- 3.3 stage: the difference bar model (VISUAL 3.5) ---- */
+const st_barmodel={
+kid:'Nothing is taken away — we measure the <span style="color:var(--fuel)">gap!</span>',
+closer:'Maya is 9, her brother is 6 — nobody loses any years! Line the bars up and the stick-out part IS the difference: 9 − 6 = 3. This picture is called a <b>bar model</b>, and it appears all through math.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#EFF7EC'},scene);
+  const eq=label(scene,450,64,46,'var(--ink)','9 − 6 = 3');
+  const U=62, x0=140;
+  const barsG=E('g',{},scene);
+  let b=6;
+  function draw(){
+    barsG.innerHTML='';
+    for(let i=0;i<9;i++) E('rect',{x:x0+i*U,y:170,width:U-6,height:56,rx:8,fill:'var(--car)',stroke:'var(--ink)','stroke-width':4},barsG);
+    label(barsG,x0-14,205,26,'var(--car-dark)','Maya: 9','end');
+    for(let i=0;i<b;i++) E('rect',{x:x0+i*U,y:260,width:U-6,height:56,rx:8,fill:'var(--blue)',stroke:'var(--ink)','stroke-width':4},barsG);
+    label(barsG,x0-14,295,26,'#33689c','Brother: '+b,'end');
+    if(b<9){
+      E('rect',{x:x0+b*U-3,y:160,width:(9-b)*U,height:76,rx:10,fill:'rgba(255,233,74,.4)',stroke:'#c8a600','stroke-width':4,'stroke-dasharray':'10 7'},barsG);
+      label(barsG,x0+b*U+(9-b)*U/2,390,30,'#8a7400','difference: '+(9-b));
+      E('path',{d:'M '+(x0+b*U+8)+' 350 L '+(x0+b*U+(9-b)*U/2)+' 370',stroke:'#8a7400','stroke-width':4,fill:'none'},barsG);
+    } else label(barsG,450,390,30,'#8a7400','Same length — difference 0!');
+    eq.textContent='9 − '+b+' = '+(9-b);
+  }
+  draw();
+  const sl=api.slider(1,9,6);
+  const lbl=api.button('brother: 6','ghost'); lbl.style.pointerEvents='none';
+  sl.addEventListener('input',()=>{
+    b=+sl.value; lbl.textContent='brother: '+b; S.whir(); draw();
+    api.setKid(b===9?'Twins! The gap is <span style="color:var(--fuel)">0</span>.':'The stick-out part shows Maya is <span style="color:var(--fuel)">'+(9-b)+'</span> years older — no subtraction "taking" needed!');
+  });
+}
+};
+/* ---- 3.4 stage: fact family triangle (VISUAL 3.6) ---- */
+const st_triangle={
+kid:'One family, <span style="color:var(--car)">four sentences!</span>',
+closer:'3, 4 and 7 are one relationship: parts on the bottom, whole on top. Addition travels UP the triangle, subtraction travels DOWN. Know one fact, get three free — and every subtraction can be checked by adding back!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#243B6B'},scene);
+  const T=[450,120], P1=[300,360], P2=[600,360];
+  E('line',{x1:T[0],y1:T[1],x2:P1[0],y2:P1[1],stroke:'#8FC7FF','stroke-width':6},scene);
+  E('line',{x1:T[0],y1:T[1],x2:P2[0],y2:P2[1],stroke:'#8FC7FF','stroke-width':6},scene);
+  E('line',{x1:P1[0],y1:P1[1],x2:P2[0],y2:P2[1],stroke:'#48609a','stroke-width':4,'stroke-dasharray':'8 8'},scene);
+  E('circle',{cx:T[0],cy:T[1],r:52,fill:'var(--spark)',stroke:'#fff','stroke-width':5},scene);
+  label(scene,T[0],T[1]+14,44,'#7a5c00','7');
+  label(scene,T[0],48,22,'#8FC7FF','the WHOLE');
+  [[P1,'3','var(--car)'],[P2,'4','var(--blue)']].forEach(([p,t,c])=>{
+    E('circle',{cx:p[0],cy:p[1],r:44,fill:c,stroke:'#fff','stroke-width':5},scene);
+    label(scene,p[0],p[1]+13,38,'#fff',t);
+  });
+  label(scene,450,432,22,'#8FC7FF','the PARTS');
+  const sentence=label(scene,450,250,40,'#FFE94A','');
+  const arrowG=E('g',{},scene);
+  const seen=new Set();
+  function arrow(from,to,col){
+    arrowG.innerHTML='';
+    const p=E('path',{d:'M '+from[0]+' '+from[1]+' L '+to[0]+' '+to[1],stroke:col,'stroke-width':10,'stroke-linecap':'round',fill:'none'},arrowG);
+    api.drawIn(p,500);
+    const ang=Math.atan2(to[1]-from[1],to[0]-from[0]);
+    E('path',{d:'M '+to[0]+' '+to[1]+' l '+(-22*Math.cos(ang-0.4))+' '+(-22*Math.sin(ang-0.4))+' M '+to[0]+' '+to[1]+' l '+(-22*Math.cos(ang+0.4))+' '+(-22*Math.sin(ang+0.4)),stroke:col,'stroke-width':10,'stroke-linecap':'round',fill:'none'},arrowG);
+  }
+  const facts=[
+    ['3 + 4 = 7', P1, T, '#7CFC9B','Parts travel UP to make the whole!'],
+    ['4 + 3 = 7', P2, T, '#7CFC9B','Other part first — same whole!'],
+    ['7 − 3 = 4', T, P2, '#FF9C8A','Start at the whole, remove a part, land on the other!'],
+    ['7 − 4 = 3', T, P1, '#FF9C8A','Whole minus the other part!']
+  ];
+  facts.forEach(f=>{
+    const b=api.button(f[0], f[0].includes('+')?'go':'boom');
+    b.addEventListener('click',()=>{
+      S.pop(); sentence.textContent=f[0];
+      arrow(f[1],f[2],f[3]);
+      seen.add(f[0]);
+      api.setKid(f[4]);
+      if(seen.size===4){ setTimeout(()=>{ S.tada();
+        api.setKid('All four! Same three numbers — <span style="color:var(--car)">ONE relationship</span>, four ways to say it!'); },700); }
+    });
+  });
+}
+};
+/* ---- 3.4 stage: subtraction = missing addend ---- */
+const st_missing={
+kid:'Subtraction secret: it\'s a <span style="color:var(--go)">missing-addend hunt!</span>',
+closer:'"13 − 9 = ?" asks the very same question as "9 + ? = 13". Counting UP from 9 (ten, eleven, twelve, thirteen — four counts!) is often way easier than taking away.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'var(--sky)'},scene);
+  label(scene,450,64,44,'var(--ink)','13 − 9 = ?');
+  const asAdd=label(scene,450,116,34,'var(--go-dark)','same as:  9 + ? = 13');
+  E('rect',{y:330,width:900,height:150,fill:'var(--grass)'},scene);
+  E('line',{x1:100,y1:330,x2:800,y2:330,stroke:'var(--ink)','stroke-width':6,'stroke-linecap':'round'},scene);
+  for(let i=8;i<=14;i++){
+    const x=100+(i-8)*116;
+    E('line',{x1:x,y1:318,x2:x,y2:342,stroke:'var(--ink)','stroke-width':5},scene);
+    label(scene,x,378,26,'#2c5c38',i);
+  }
+  const frog=E('text',{x:100+116,y:305,'font-size':58,'text-anchor':'middle',text:'🐸'},scene);
+  const counts=E('g',{},scene);
+  let pos=9,hops=0,anim=null;
+  function reset(){ pos=9;hops=0; counts.innerHTML=''; frog.setAttribute('x',100+116); frog.setAttribute('y',305);
+    asAdd.textContent='same as:  9 + ? = 13'; }
+  const hop=api.button('🐸 Count up! +1','go'), rs=api.button('🔄','ghost');
+  rs.addEventListener('click',()=>{ S.pop(); reset();
+    api.setKid('Subtraction secret: it\'s a <span style="color:var(--go)">missing-addend hunt!</span>'); });
+  hop.addEventListener('click',()=>{
+    if(anim||pos>=13){ if(pos>=13) S.thud(); return; }
+    const x0=100+(pos-8)*116, x1=100+(pos-7)*116, t0=performance.now();
+    pos++; hops++; S.pop();
+    label(counts,x1,250,30,'var(--go-dark)',hops);
+    anim={x0:x0,x1:x1,t0:t0};
+    api.onUpdate(()=>{
+      if(!anim) return;
+      const u=Math.min(1,(performance.now()-anim.t0)/360);
+      frog.setAttribute('x',anim.x0+(anim.x1-anim.x0)*u);
+      frog.setAttribute('y',305-Math.sin(u*Math.PI)*60);
+      if(u>=1){ anim=null;
+        if(pos===13){ S.tada(); asAdd.textContent='9 + 4 = 13  →  13 − 9 = 4 !';
+          api.setKid('Four counts! So 13 − 9 = <span style="color:var(--go)">4</span>. You subtracted by ADDING!'); }
+        else api.setKid(hops+' hop'+(hops>1?'s':'')+' so far… keep counting up to 13!');
+      }
+    });
+  });
+}
+};
+/* ---- base-ten block helpers ---- */
+function rod(g,x,y,col){ const r=E('rect',{x:x,y:y,width:22,height:110,rx:5,fill:col||'#5FA8E8',stroke:'var(--ink)','stroke-width':3},g);
+  for(let i=1;i<10;i++) E('line',{x1:x,y1:y+i*11,x2:x+22,y2:y+i*11,stroke:'rgba(20,30,60,.35)','stroke-width':1.5},g); return r; }
+function cube(g,x,y,col){ return E('rect',{x:x,y:y,width:20,height:20,rx:4,fill:col||'#F5A623',stroke:'var(--ink)','stroke-width':3},g); }
+/* ---- 3.5 stage: regrouping with blocks (VISUAL 3.7) ---- */
+const st_carry={
+kid:'47 + 25: watch ten ones <span style="color:var(--boom)">become a ten!</span>',
+closer:'Add tens and ones separately: 40+20=60 and 7+5=12. But 12 ones is MORE than nine — so ten of them bundle into a brand-new ten-rod. That bundling is what "carry the one" really means. It\'s not magic, it\'s packing!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#F2EEE4'},scene);
+  const eq=label(scene,450,54,40,'var(--ink)','47 + 25 = ?');
+  const msg=label(scene,450,96,25,'#7c6f57','47 is 4 tens and 7 ones · 25 is 2 tens and 5 ones');
+  const G=E('g',{},scene);
+  let phase=0;
+  function draw(){
+    G.innerHTML='';
+    if(phase===0){
+      for(let i=0;i<4;i++) rod(G,150+i*34,140);
+      for(let i=0;i<7;i++) cube(G,320+i*28,185);
+      label(G,110,205,28,'#54607a','47','end');
+      for(let i=0;i<2;i++) rod(G,150+i*34,290);
+      for(let i=0;i<5;i++) cube(G,320+i*28,335);
+      label(G,110,355,28,'#54607a','25','end');
+    } else if(phase===1){
+      for(let i=0;i<6;i++) rod(G,150+i*34,150);
+      label(G,250,300,26,'#54607a','6 tens = 60');
+      for(let i=0;i<12;i++){
+        const c=cube(G,480+(i%6)*30,190+Math.floor(i/6)*30);
+        if(i<10) c.setAttribute('stroke-dasharray','5 4'), c.setAttribute('stroke','var(--boom)');
+      }
+      E('rect',{x:472,y:182,width:186,height:66,rx:10,fill:'none',stroke:'var(--boom)','stroke-width':4,'stroke-dasharray':'10 7'},G);
+      label(G,565,300,26,'#b34e00','12 ones… ten of them want to bundle!');
+    } else if(phase===2){
+      for(let i=0;i<6;i++) rod(G,150+i*34,150);
+      const newRod=rod(G,150+6*34,150,'var(--boom)');
+      E('text',{x:150+6*34+11,y:130,'font-size':26,'text-anchor':'middle',text:'✨'},G);
+      for(let i=0;i<2;i++) cube(G,480+i*30,190);
+      label(G,450,320,28,'#b34e00','10 ones bundled into 1 new ten — THAT is the "carry"!');
+    } else {
+      for(let i=0;i<7;i++) rod(G,240+i*40,160,i===6?'var(--boom)':'#5FA8E8');
+      for(let i=0;i<2;i++) cube(G,560+i*30,200);
+      label(G,450,340,34,'var(--go-dark)','7 tens + 2 ones = 72');
+    }
+  }
+  draw();
+  const btn=api.button('1️⃣ Put the ones together!','go');
+  btn.addEventListener('click',()=>{
+    phase=Math.min(3,phase+1); S.pop(); draw();
+    if(phase===1){ btn.innerHTML='2️⃣ Bundle ten ones!';
+      msg.textContent='Tens: 40 + 20 = 60 · Ones: 7 + 5 = 12';
+      api.setKid('7 + 5 = 12 ones — that\'s more than nine ones can stay loose!'); }
+    else if(phase===2){ btn.innerHTML='3️⃣ Count everything!'; S.woosh();
+      api.setKid('SNAP! Ten loose ones packed into a shiny new <span style="color:var(--boom)">ten-rod</span>!'); }
+    else if(phase===3){ btn.style.display='none'; S.tada();
+      eq.textContent='47 + 25 = 72';
+      msg.textContent='60 + 12 = 72 — the little "1" you carry IS that bundle.';
+      api.setKid('47 + 25 = <span style="color:var(--go)">72</span>! Carrying is just packing tens!'); }
+  });
+}
+};
+/* ---- 3.5 stage: the written method, step by step ---- */
+const st_column={
+kid:'The little ¹ isn\'t decoration — it IS the bundle!',
+closer:'Same problem, compact written form. 7+5=12 → write the 2, move the 1 ten into the tens column → 1+4+2 = 7 tens → 72. Every mark on the paper matches a real block move.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#fff'},scene);
+  const mono={'font-family':'Courier New, monospace','font-weight':'bold'};
+  const carry=E('text',Object.assign({x:400,y:130,'font-size':34,fill:'var(--boom)','text-anchor':'middle',opacity:0},mono,{text:'1'}),scene);
+  E('text',Object.assign({x:430,y:180,'font-size':64,fill:'var(--ink)','text-anchor':'middle'},mono,{text:'4 7'}),scene);
+  E('text',Object.assign({x:415,y:250,'font-size':64,fill:'var(--ink)','text-anchor':'middle'},mono,{text:'+ 2 5'}),scene);
+  E('line',{x1:340,y1:280,x2:530,y2:280,stroke:'var(--ink)','stroke-width':6},scene);
+  const ones=E('text',Object.assign({x:466,y:350,'font-size':64,fill:'var(--go-dark)','text-anchor':'middle',opacity:0},mono,{text:'2'}),scene);
+  const tens=E('text',Object.assign({x:400,y:350,'font-size':64,fill:'var(--go-dark)','text-anchor':'middle',opacity:0},mono,{text:'7'}),scene);
+  const hint=label(scene,450,430,28,'#7c6f57','');
+  const onesBox=E('rect',{x:440,y:110,width:56,height:260,rx:12,fill:'none',stroke:'var(--fuel)','stroke-width':4,opacity:0},scene);
+  let step=0;
+  const btn=api.button('▶ Next step','go');
+  btn.addEventListener('click',()=>{
+    step++; S.pop();
+    if(step===1){ onesBox.setAttribute('opacity',1);
+      hint.textContent='Ones first: 7 + 5 = 12';
+      api.setKid('Start in the ONES column: 7 + 5 = 12.'); }
+    else if(step===2){ ones.setAttribute('opacity',1); carry.setAttribute('opacity',1); S.woosh();
+      hint.textContent='Write the 2 … carry the 1 ten';
+      api.setKid('Write the <b>2</b>, and the little <span style="color:var(--boom)">¹</span> hops to the tens — that\'s the bundle from the blocks!'); }
+    else if(step===3){ onesBox.setAttribute('opacity',0); tens.setAttribute('opacity',1);
+      hint.textContent='Tens: 1 + 4 + 2 = 7';
+      api.setKid('Tens column: 1 + 4 + 2 = <b>7</b> tens.'); }
+    else if(step===4){ S.tada(); btn.style.display='none';
+      hint.textContent='47 + 25 = 72 ✓';
+      api.setKid('<span style="color:var(--go)">72!</span> Paper and blocks tell the same story.'); }
+  });
+}
+};
+/* ---- 3.6 stage: trade a ten (VISUAL 3.8) ---- */
+const st_trade={
+kid:'52 − 27: you can\'t take 7 from 2… so <span style="color:var(--blue)">TRADE!</span>',
+closer:'Unbundle one ten into ten ones: 52 becomes 4 tens and 12 ones — still 52, just arranged differently! Now the ones work: 12−7=5, and the tens: 4−2=2. Answer 25. Always check by adding back: 25+27=52 ✓',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#F2EEE4'},scene);
+  const eq=label(scene,450,54,40,'var(--ink)','52 − 27 = ?');
+  const msg=label(scene,450,96,26,'#7c6f57','52 is 5 tens and 2 ones');
+  const G=E('g',{},scene);
+  let phase=0;
+  function xout(x,y){ label(G,x,y,44,'var(--car)','✗'); }
+  function draw(){
+    G.innerHTML='';
+    if(phase<=1){
+      for(let i=0;i<5;i++) rod(G,240+i*40,150,phase===1&&i===4?'var(--boom)':'#5FA8E8');
+      for(let i=0;i<2;i++) cube(G,470+i*30,190);
+      if(phase===1) label(G,450,340,28,'#b34e00','😬 Only 2 loose ones — can\'t take 7 away!');
+    } else if(phase===2){
+      for(let i=0;i<4;i++) rod(G,200+i*40,150);
+      for(let i=0;i<12;i++) cube(G,420+(i%6)*30,150+Math.floor(i/6)*30);
+      label(G,450,340,30,'#33689c','4 tens + 12 ones — still 52!');
+    } else if(phase===3){
+      for(let i=0;i<4;i++){ rod(G,200+i*40,150); if(i>=2) xout(211+i*40,215); }
+      for(let i=0;i<12;i++){ cube(G,420+(i%6)*30,150+Math.floor(i/6)*30); if(i<7) xout(430+(i%6)*30,168+Math.floor(i/6)*30); }
+      label(G,450,340,30,'var(--go-dark)','Left: 2 tens + 5 ones = 25');
+    } else {
+      label(G,450,220,54,'var(--go-dark)','52 − 27 = 25');
+      label(G,450,300,34,'#33689c','Check: 25 + 27 = 52 ✓');
+    }
+  }
+  draw();
+  const btn=api.button('1️⃣ Try the ones: 2 − 7?','boom');
+  btn.addEventListener('click',()=>{
+    phase=Math.min(4,phase+1); draw();
+    if(phase===1){ S.thud(); btn.innerHTML='2️⃣ Trade a ten for 10 ones!';
+      api.setKid('2 − 7? <span style="color:var(--boom)">Can\'t!</span> Time for the fix…'); }
+    else if(phase===2){ S.woosh(); btn.innerHTML='3️⃣ NOW take away 27!';
+      msg.textContent='Trade one ten → ten ones. The amount never changed!';
+      api.setKid('One rod unbundled — <span style="color:var(--blue)">still 52</span>, just rearranged!'); }
+    else if(phase===3){ S.pop(); btn.innerHTML='4️⃣ Check by adding back!';
+      msg.textContent='Ones: 12 − 7 = 5 · Tens: 4 − 2 = 2';
+      api.setKid('Cross out 2 tens and 7 ones… <span style="color:var(--go)">25 left!</span>'); }
+    else { S.tada(); btn.style.display='none'; eq.textContent='52 − 27 = 25';
+      msg.textContent='Fact families earning their keep!';
+      api.setKid('25 + 27 lands right back on 52 — the answer <span style="color:var(--go)">checks out!</span>'); }
+  });
+}
+};
+/* ---- 3.6 stage: the classic mistake ---- */
+const st_mistake={
+kid:'Two kids solved 52 − 27. <span style="color:var(--car)">Who\'s right?</span>',
+closer:'Fiona flipped the ones ("7 − 2, big number on top!") and got 35. Rex traded a ten and got 25. Subtraction is NOT commutative — 52 − 27 and 27 − 52 are different questions. When the top digit is smaller: regroup, never flip!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FDEBF2'},scene);
+  E('rect',{x:80,y:110,width:340,height:260,rx:20,fill:'#fff',stroke:'var(--ink)','stroke-width':5},scene);
+  E('rect',{x:480,y:110,width:340,height:260,rx:20,fill:'#fff',stroke:'var(--ink)','stroke-width':5},scene);
+  E('text',{x:250,y:180,'font-size':56,'text-anchor':'middle',text:'🙋‍♀️'},scene);
+  E('text',{x:650,y:180,'font-size':56,'text-anchor':'middle',text:'🙋‍♂️'},scene);
+  label(scene,250,230,26,'#54607a','Fiona flipped:');
+  label(scene,250,266,28,'var(--ink)','"7 − 2 = 5, so… 35!"');
+  label(scene,650,230,26,'#54607a','Rex traded a ten:');
+  label(scene,650,266,28,'var(--ink)','"12 − 7 = 5, so… 25!"');
+  const fMark=label(scene,250,330,54,'var(--car)','');
+  const rMark=label(scene,650,330,54,'var(--go-dark)','');
+  let done=false;
+  const bf=api.button('Fiona: 35','boom'), brx=api.button('Rex: 25','go');
+  bf.addEventListener('click',()=>{
+    if(done) return;
+    S.thud(); fMark.textContent='✗';
+    api.setKid('Careful! Fiona answered <b>27 − 52\'s ones</b>, not 52 − 27\'s. Order <span style="color:var(--car)">matters</span> in subtraction!');
+  });
+  brx.addEventListener('click',()=>{
+    if(done) return; done=true;
+    S.tada(); rMark.textContent='✓'; fMark.textContent='✗';
+    api.setKid('Rex is right: <span style="color:var(--go)">25</span>! Top digit too small? <b>Trade — never flip.</b> (Check: 25 + 27 = 52 ✓)');
+  });
+}
+};
+/* ---- 3.7 stage: ten frames (VISUAL 3.9) ---- */
+const st_tenframe={
+kid:'8 + 5: <span style="color:var(--go)">fill the ten first!</span>',
+closer:'Ten is the friendliest number we have. Split the 5 into 2 + 3, let the 2 fill the first frame — now it\'s 10 + 3 = 13. No counting one-by-one, just a hop into the empty boxes!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#E8F6FF'},scene);
+  const eq=label(scene,450,60,44,'var(--ink)','8 + 5 = ?');
+  function frame(x0){
+    for(let r=0;r<2;r++)for(let c=0;c<5;c++)
+      E('rect',{x:x0+c*62,y:160+r*62,width:56,height:56,rx:8,fill:'#fff',stroke:'var(--ink)','stroke-width':4},scene);
+  }
+  frame(120); frame(500);
+  const dots=[];
+  for(let i=0;i<8;i++){
+    const c=i%5,r=Math.floor(i/5);
+    dots.push(E('circle',{cx:148+c*62,cy:188+r*62,r:20,fill:'var(--blue)',stroke:'var(--ink)','stroke-width':3},scene));
+  }
+  const right=[];
+  for(let i=0;i<5;i++){
+    const c=i%5;
+    right.push(E('circle',{cx:528+c*62,cy:188,r:20,fill:'var(--fuel)',stroke:'var(--ink)','stroke-width':3},scene));
+  }
+  let hopped=false;
+  const btn=api.button('🐸 Hop 2 over — make a ten!','go');
+  btn.addEventListener('click',()=>{
+    if(hopped) return; hopped=true; S.woosh();
+    [[right[0],148+3*62,188+62],[right[1],148+4*62,188+62]].forEach(([d,tx,ty],k)=>{
+      d.style.transition='transform .8s cubic-bezier(.3,1.2,.4,1)';
+      const x0=+d.getAttribute('cx'), y0=+d.getAttribute('cy');
+      setTimeout(()=>{ d.style.transform='translate('+(tx-x0)+'px,'+(ty-y0)+'px)'; S.pop(); },k*250);
+    });
+    setTimeout(()=>{
+      S.ding(); eq.textContent='8 + 5 → 10 + 3 = 13';
+      api.setKid('Full frame = <b>10</b>, plus 3 left over = <span style="color:var(--go)">13</span>! Ten did the heavy lifting.');
+      btn.style.display='none';
+    },1300);
+  });
+}
+};
+/* ---- 3.7 stage: compensation ---- */
+const st_compensate={
+kid:'Borrow a <span style="color:var(--fuel)">friendlier problem</span> — then pay it back!',
+closer:'39 + 26 is awkward… but 39 is one away from 40! Compute 40 + 26 = 66, then pay back the borrowed 1: 65. This strategy is called <b>compensation</b> — mental-math royalty.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FFF9EF'},scene);
+  const big=label(scene,450,180,64,'var(--ink)','39 + 26');
+  const note=label(scene,450,260,30,'#a06a2c','');
+  const iou=label(scene,700,120,30,'var(--boom)','');
+  let step=0;
+  const btn=api.button('✨ Round 39 up to 40!','go');
+  btn.addEventListener('click',()=>{
+    step++; S.pop();
+    if(step===1){ big.textContent='40 + 26'; iou.textContent='🧾 we owe 1';
+      note.textContent='(borrowed 1 to make a friendly forty)';
+      btn.innerHTML='🧮 Easy! 40 + 26 = ?';
+      api.setKid('40 is friendly — tens snap together!'); }
+    else if(step===2){ big.textContent='40 + 26 = 66'; S.ding();
+      btn.innerHTML='🪙 Pay back the 1!';
+      api.setKid('66… but wait, we <span style="color:var(--boom)">borrowed 1</span>. Pay it back!'); }
+    else { big.textContent='66 − 1 = 65'; iou.textContent='🧾 paid ✓'; S.tada();
+      note.textContent='so 39 + 26 = 65';
+      btn.style.display='none';
+      api.setKid('<span style="color:var(--go)">65!</span> Borrow a friendly problem, pay back the difference.'); }
+  });
+}
+};
+/* ---- 3.8 stage: the three pictures (VISUAL 3.10) ---- */
+const st_barmenu={
+kid:'Don\'t hunt keywords — <span style="color:var(--blue)">match the picture!</span>',
+closer:'Every add/subtract story is one of three pictures: JOINING (parts make a whole), TAKING AWAY (part leaves the whole), or COMPARING (measure the gap). Words can lie — "more" appears in adding AND comparing — but the picture never lies.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#EFF7EC'},scene);
+  const cards=[
+    {x:60,t:'JOINING',ex:'"3 join 5" → 3 + 5 = ?',draw(g,x){
+      E('rect',{x:x+20,y:210,width:90,height:40,rx:8,fill:'var(--car)',stroke:'var(--ink)','stroke-width':3},g);
+      E('rect',{x:x+110,y:210,width:130,height:40,rx:8,fill:'var(--blue)',stroke:'var(--ink)','stroke-width':3},g);
+      E('path',{d:'M '+(x+20)+' 190 L '+(x+240)+' 190',stroke:'var(--ink)','stroke-width':3},g);
+      label(g,x+130,178,24,'var(--ink)','?');
+    }},
+    {x:330,t:'TAKING AWAY',ex:'"ate 3 of the 8" → 8 − 3 = ?',draw(g,x){
+      E('rect',{x:x+20,y:210,width:220,height:40,rx:8,fill:'#d8d2c2',stroke:'var(--ink)','stroke-width':3},g);
+      E('rect',{x:x+20,y:210,width:85,height:40,rx:8,fill:'var(--boom)',stroke:'var(--ink)','stroke-width':3,opacity:.8},g);
+      label(g,x+62,238,22,'#fff','gone');
+      label(g,x+172,238,26,'var(--ink)','?');
+    }},
+    {x:600,t:'COMPARING',ex:'"how many more?" → 9 − 6 = ?',draw(g,x){
+      E('rect',{x:x+20,y:196,width:220,height:34,rx:8,fill:'var(--car)',stroke:'var(--ink)','stroke-width':3},g);
+      E('rect',{x:x+20,y:238,width:150,height:34,rx:8,fill:'var(--blue)',stroke:'var(--ink)','stroke-width':3},g);
+      E('rect',{x:x+170,y:192,width:74,height:42,rx:8,fill:'rgba(255,233,74,.5)',stroke:'#c8a600','stroke-width':3,'stroke-dasharray':'7 5'},g);
+      label(g,x+207,222,24,'#8a7400','?');
+    }}
+  ];
+  const seen=new Set();
+  cards.forEach(c=>{
+    const g=E('g',{},scene);
+    const box=E('rect',{x:c.x,y:120,width:260,height:230,rx:18,fill:'#fff',stroke:'var(--ink)','stroke-width':4},g);
+    label(g,c.x+130,160,26,'var(--ink)',c.t);
+    c.draw(g,c.x);
+    label(g,c.x+130,320,17,'#7c6f57',c.ex);
+    g.style.cursor='pointer';
+    g.addEventListener('pointerdown',()=>{
+      S.pop(); seen.add(c.t);
+      box.setAttribute('stroke','var(--go)'); box.setAttribute('stroke-width',7);
+      api.setKid('<b>'+c.t+'</b>: '+c.ex+(seen.size===3?' — you\'ve met all three pictures! 🎉':''));
+      if(seen.size===3) S.ding();
+    });
+  });
+  label(scene,450,420,26,'#4b6a52','👆 Tap each picture!');
+}
+};
+/* ---- 3.8 stage: the sneaky worked example ---- */
+const st_worked={
+kid:'Liam GAVE AWAY 14 marbles and has 23 left. How many did he <span style="color:var(--car)">start</span> with?',
+closer:'It SOUNDS like subtraction ("gave away!") — but the missing number is the WHOLE. Whole = part + part = 14 + 23. This is exactly why we picture the structure instead of chasing words.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FDEBF2'},scene);
+  E('text',{x:450,y:150,'font-size':72,'text-anchor':'middle',text:'🧒'},scene);
+  const barG=E('g',{},scene);
+  E('path',{d:'M 200 230 L 700 230',stroke:'var(--ink)','stroke-width':4},barG);
+  label(barG,450,218,30,'var(--ink)','START = ?');
+  E('rect',{x:200,y:250,width:190,height:48,rx:8,fill:'var(--boom)',stroke:'var(--ink)','stroke-width':4},barG);
+  label(barG,295,282,24,'#fff','gave: 14');
+  E('rect',{x:390,y:250,width:310,height:48,rx:8,fill:'var(--blue)',stroke:'var(--ink)','stroke-width':4},barG);
+  label(barG,545,282,24,'#fff','kept: 23');
+  const fb=label(scene,450,390,32,'var(--go-dark)','');
+  let done=false;
+  const b1=api.button('23 − 14','boom'), b2=api.button('14 + 23','go');
+  b1.addEventListener('click',()=>{
+    if(done) return;
+    S.thud(); fb.textContent='Hmm — that finds a PART, not the start…';
+    api.setKid('The words said "gave away", but look at the bar: the <b>start is the WHOLE</b> — both parts together!');
+  });
+  b2.addEventListener('click',()=>{
+    if(done) return; done=true;
+    S.tada(); fb.textContent='14 + 23 = 37 marbles! ✓';
+    api.setKid('<span style="color:var(--go)">37!</span> It sounded like subtracting, but the structure said ADD. Picture beats keywords!');
+  });
+}
+};
+/* ---- assemble Chapter 3 ---- */
 registerLesson('addsub',[
-{stages:A_num, qa:[
-  {q:'Why is the answer called a "sum"?', a:'Sum is just the math word for the total you get when you put groups together. Three apples plus two apples: the sum is five. Nothing magical was added — the apples only moved into one pile.'},
-  {q:'What happens if I add zero?', a:'Adding zero changes nothing at all! Zero means "none", so putting none more into your pile leaves it exactly the same. Five plus zero is still five.'},
-  {q:'Can I take away MORE than I have?', a:'With real cookies, no — once they are gone, they are gone! But math has a trick for it called negative numbers. They keep counting below zero, like floors in a basement under a building. You will meet them on the number line: just keep hopping left past zero!'}
+{stages:[A_num[0], st_balance, quizStage('3.1',[
+  {q:'4 pencils in your desk, 3 in your bag. How many pencils?',choices:[6,7,8],a:7,why:'4 + 3 = 7. The addends are 4 and 3; the sum is 7!'},
+  {q:'6 birds on a wire, 2 more land. How many birds?',choices:[7,8,9],a:8,why:'6 + 2 = 8!'},
+  {q:'5 red blocks and 0 blue blocks. How many blocks?',choices:[0,5,50],a:5,why:'Adding zero changes nothing — zero is the identity!'}
+])], qa:[
+  {q:'What are the addends and the sum?', a:'The numbers being put together are the addends, and the total is the sum. In 3 plus 2 equals 5, the addends are 3 and 2, and 5 is the sum.'},
+  {q:'What does the equals sign REALLY mean?', a:'It means both sides are the same amount — like level balance pans. It does not mean "the answer goes here". That is why 5 equals 3 plus 2 is a perfectly fine sentence!'}
+]},
+{stages:[st_train, A_num[3], quizStage('3.2',[
+  {q:'3 + 8: which is the FASTER way to count on?',choices:['Start at 8, count up 3','Start at 3, count up 8'],a:'Start at 8, count up 3',why:'Order doesn\'t matter, so start big: nine, ten, eleven!'},
+  {q:'2 + 9 = ?',choices:[10,11,12],a:11,why:'Start at 9 and hop 2: ten, eleven!'},
+  {q:'4 + 6 = ?',choices:[9,10,11],a:10,why:'Same as 6 + 4 — flip it and count on!'}
+])], qa:[
+  {q:'Why start from the bigger number?', a:'Efficiency! Adding 2 plus 7 by counting on is much faster from 7 — just "eight, nine" — than counting seven steps from 2. The commutative property gives you permission to always start big.'},
+  {q:'Does order matter in subtraction?', a:'YES — subtraction is not commutative. 9 minus 6 is 3, but 6 minus 9 is not 3. Only addition lets the numbers trade places freely.'}
+]},
+{stages:[st_crossout, st_barmodel, quizStage('3.3',[
+  {q:'8 balloons; 5 fly away. How many are left?',choices:[3,5,13],a:3,why:'Take-away picture: 8 − 5 = 3.'},
+  {q:'Team A scored 10, Team B scored 7. By how many did A win?',choices:[3,7,17],a:3,why:'Nothing was removed — we measured the difference: 10 − 7 = 3.'},
+  {q:'You had 12 dollars and spent 4. How much now?',choices:[8,9,16],a:8,why:'Take away: 12 − 4 = 8.'}
+])], qa:[
+  {q:'What are the TWO pictures of subtraction?', a:'Taking away — part of a group leaves, count what remains. And finding the difference — nothing leaves, you measure the gap between two amounts, like ages of 9 and 6. Strong math students carry both pictures.'},
+  {q:'What is the answer to a subtraction called?', a:'The difference! You start with the minuend, remove the subtrahend, and what you get is the difference. "Difference" is the word worth remembering — it appears everywhere.'}
+]},
+{stages:[st_triangle, st_missing, quizStage('3.4',[
+  {q:'Which sentence belongs to the fact family of 5, 6 and 11?',choices:['6 + 5 = 11','11 + 5 = 6','5 − 6 = 11'],a:'6 + 5 = 11',why:'Parts 5 and 6, whole 11: 5+6, 6+5, 11−5, 11−6.'},
+  {q:'15 − 8 = ? (try counting UP from 8)',choices:[6,7,8],a:7,why:'8 + 7 = 15, so 15 − 8 = 7!'},
+  {q:'Why does the family of 4, 4, 8 have only TWO sentences?',choices:['Both parts are the same','8 is too big','You can\'t subtract 4'],a:'Both parts are the same',why:'Swapping 4 and 4 just repeats the same sentences!'}
+])], qa:[
+  {q:'What is a fact family?', a:'Three numbers, one relationship, four sentences. From 3, 4 and 7 you get 3+4=7, 4+3=7, 7−3=4 and 7−4=3. Whole on top, parts on the bottom — the four sentences are four paths through one triangle.'},
+  {q:'How do fact families check subtraction?', a:'Finish a subtraction, then add back! If 52 minus 27 gave you 25, test it: does 25 plus 27 return to 52? Yes — so the answer checks out. Addition and subtraction are the same relationship read in different directions.'}
+]},
+{stages:[st_carry, st_column, quizStage('3.5',[
+  {q:'36 + 48 = ?',choices:[74,84,86],a:84,why:'Ones: 6+8=14 → bundle a ten! 70 + 14 = 84.'},
+  {q:'57 + 29 = ?',choices:[76,86,87],a:86,why:'7+9=16 → carry: 70 + 16 = 86.'},
+  {q:'64 + 36 = ? (watch BOTH columns!)',choices:[90,99,100],a:100,why:'4+6=10 AND 6+3+1=10 — double bundle to 100!'}
+])], qa:[
+  {q:'What is "carrying" really?', a:'Bundling! When a column collects more than nine ones, ten of them pack themselves into one new ten. The little 1 you write is not decoration — it IS that bundle of ten, moving to its proper column.'},
+  {q:'Why do we add the parts separately?', a:'Place value does the work: 47 is 4 tens and 7 ones. Add tens with tens, ones with ones, then combine — 60 plus 12 is 72. Breaking numbers into parts turns one hard problem into two easy ones.'}
+]},
+{stages:[st_trade, st_mistake, quizStage('3.6',[
+  {q:'43 − 18 = ? (check by adding back!)',choices:[25,26,35],a:25,why:'Trade a ten: 13−8=5, 3−1=2 → 25. And 25+18=43 ✓'},
+  {q:'70 − 34 = ? (trade carefully from the 0!)',choices:[36,44,46],a:36,why:'Trade: 10−4=6, 6−3=3 → 36.'},
+  {q:'81 − 79 = ? (estimate first — close numbers!)',choices:[2,12,22],a:2,why:'They\'re neighbors — count up: 80, 81. Just 2!'}
+])], qa:[
+  {q:'What is "borrowing" really?', a:'Trading — the reverse of carrying. Unbundle one ten into ten ones: 52 becomes 4 tens and 12 ones, the SAME amount arranged differently. Students fear regrouping changed the number — it never does.'},
+  {q:'Why can\'t I just flip and do 7 minus 2?', a:'Because 52 minus 27 and 27 minus 52 are different questions! Subtraction is not commutative — order matters. When the top digit is smaller, the answer is to trade, never to flip.'}
+]},
+{stages:[st_tenframe, st_compensate, quizStage('3.7',[
+  {q:'7 + 6 = ? (make a ten!)',choices:[12,13,14],a:13,why:'7+3=10, then 3 more: 13.'},
+  {q:'15 − 7 = ? (two hops!)',choices:[7,8,9],a:8,why:'15−5=10, then 10−2=8.'},
+  {q:'49 + 35 = ? (compensate!)',choices:[83,84,85],a:84,why:'50+35=85, pay back 1: 84.'},
+  {q:'62 − 29 = ?',choices:[32,33,34],a:33,why:'62−30=32, give 1 back: 33.'}
+])], qa:[
+  {q:'Why is ten so special?', a:'Our whole number system is built on tens! Numbers that end in zero are easy to add and subtract, so good mental math bends every problem toward a ten — fill the ten-frame first, then deal with the leftovers.'},
+  {q:'What is compensation?', a:'Borrow a friendlier problem, then pay back the difference. For 39 plus 26: use 40 plus 26 which is 66, then subtract the extra 1 you borrowed — 65. It feels like a magic trick, but it is just careful bookkeeping!'}
+]},
+{stages:[st_barmenu, st_worked, quizStage('3.8',[
+  {q:'A jar holds 45 marbles: 28 green, the rest yellow. How many yellow?',choices:[17,23,73],a:17,why:'Missing PART: 45 − 28 = 17.'},
+  {q:'Priya read 36 pages Saturday and 27 Sunday. How many in all?',choices:[53,63,64],a:63,why:'Joining picture: 36 + 27 = 63.'},
+  {q:'A baker SOLD 35 muffins and has 19 left. How many did she bake?',choices:[16,44,54],a:54,why:'Sounds like subtract — but the start is the WHOLE: 35 + 19 = 54!'}
+])], qa:[
+  {q:'How do I choose between + and −?', a:'Add when combining or increasing — joining groups, receiving more, finding a total. Subtract when removing, comparing, or finding a missing part. Best of all: draw the bar picture and the choice makes itself.'},
+  {q:'Can keywords trick me?', a:'Absolutely! "More" often means addition — three MORE join — but it also appears in comparison subtraction: how many MORE does Ana have than Ben? Don\'t hunt keywords. Picture the situation, or better yet, draw it.'}
 ]},
 {stages:A_graph, qa:[
   {q:'Why do the dots make a straight line?', a:'Because the machine adds the SAME amount to every number. Every step to the right climbs exactly one step up — even steps always make a straight path, never a curve.'},
-  {q:'What are x and y?', a:'x is the number you put IN, and y is the number that comes OUT. Every in-and-out pair becomes one dot on the graph: across for x, up for y.'},
-  {q:'What does sliding the line up mean?', a:'It means every single answer grew by the same amount at once. Add three, and every point on the whole line lifts up by three — the line keeps its exact tilt, it just rides the elevator.'}
+  {q:'What are x and y?', a:'x is the number you put IN, and y is the number that comes OUT. Every in-and-out pair becomes one dot on the graph: across for x, up for y.'}
 ]},
 {stages:A_world, qa:[
   {q:'Where else do we add and subtract?', a:'Everywhere! Game scores, money, temperature going up and down, minutes left before bedtime, people getting on and off a bus. Any time something comes in or goes out, you are adding or subtracting.'},
-  {q:'Why did the piggy bank say no?', a:'Because you cannot hand over coins you do not have! Grown-ups call going below zero "debt" — the bank remembers you owe them. The piggy keeps it simple: no coins, no stickers.'},
   {q:'What is a running total?', a:'A number that keeps updating as things flow in and out — like the water level in the bathtub. Every splash in adds, every glug out subtracts, and the level always shows where you stand right now.'}
 ]}]);
 })();
