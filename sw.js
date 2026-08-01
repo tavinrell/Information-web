@@ -1,5 +1,5 @@
 /* Our Learning Web — offline service worker */
-const CACHE = 'learning-web-v3';
+const CACHE = 'learning-web-v4';
 const PRECACHE = [
   './',
   './index.html',

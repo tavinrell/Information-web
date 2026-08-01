@@ -203,6 +203,7 @@
     <h1>Our Learning Web ✨</h1>
     <div class="hudRight">
       <span id="starCount">⭐ 0/12</span>
+      <button class="roundBtn" id="homeBtn" title="Fly back home">🏠</button>
       <button class="roundBtn" id="soundBtn" title="Sound on/off">🔊</button>
     </div>
   </div>
@@ -211,7 +212,7 @@
     <p id="cardDesc"></p>
     <div id="cardBtns"></div>
   </div>
-  <div id="treeHint">Drag to float through the web 🌀 · Zoom close to a bubble and it <b>becomes</b> the lesson!</div>
+  <div id="treeHint">Drag to look around 🌀 · Zoom to <b>fly</b> 🚀 · Fly into a bubble and it becomes the lesson!</div>
 </div>
 <!-- ================= LESSON SCREEN ================= -->
 <div id="lessonScreen">
@@ -431,17 +432,32 @@ const stars=[];
 for(let i=0;i<170;i++) stars.push({x:Math.random(), y:Math.random(), r:Math.random()*1.4+.3, tw:Math.random()*6.28, sp:.5+Math.random()});
 const cam={ yaw:-0.5, pitch:0.22, dist:580, target:[0,135,0] };
 const HOME={target:[0,135,0], dist:580};
+const FLY_DIST=150;      /* below this zoom level, zooming = flying forward through space */
+function camForward(){
+  const cy=Math.cos(cam.yaw), sy=Math.sin(cam.yaw), cp=Math.cos(cam.pitch), sp=Math.sin(cam.pitch);
+  return [-cp*sy, sp, cp*cy];
+}
+function flyForward(delta){
+  const f=camForward();
+  cam.target=cam.target.map((v,i)=>v+f[i]*delta);
+  /* stay inside the web's neighborhood */
+  const C=[0,140,-10];
+  const d=Math.hypot(cam.target[0]-C[0],cam.target[1]-C[1],cam.target[2]-C[2]);
+  if(d>720) cam.target=cam.target.map((v,i)=>C[i]+(v-C[i])*720/d);
+}
+let morphLock=null;   /* while a tap-flight is animating, only its destination may open */
 let camAnim=null;
-function flyTo(target,dist,yaw,ms,done){
+function flyTo(target,dist,yaw,ms,done,lockNode){
   const from={t:[...cam.target], d:cam.dist, y:cam.yaw, p:cam.pitch};
   const to={t:target, d:dist, y:(yaw===null?cam.yaw:yaw), p:cam.pitch};
   const t0=performance.now();
+  morphLock=(lockNode===undefined)?'block':lockNode;
   camAnim={step(now){
     let u=Math.min(1,(now-t0)/ms); u=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
     cam.target=from.t.map((v,i)=>v+(to.t[i]-v)*u);
     cam.dist=from.d+(to.d-from.d)*u;
     cam.yaw=from.y+(to.y-from.y)*u;
-    if(u>=1){ camAnim=null; done&&done(); }
+    if(u>=1){ camAnim=null; morphLock=null; done&&done(); }
   }};
 }
 const FOCAL=520;
@@ -457,8 +473,9 @@ function project(p){
   return {x:W/2+x1*s, y:H*0.56-y2*s, s:s, z:zc};
 }
 let lastInteract=0, treeActive=true, hoverNode=null, selectedNode=null;
-/* proximity auto-open: as a lesson bubble grows on screen, it morphs into its lesson */
-const OPEN_START=50, OPEN_FULL=110;
+/* proximity auto-open: purely distance-based — fly within OPEN_Z_START units of a bubble
+   (while roughly facing it) and it morphs into its lesson */
+const OPEN_Z_START=110, OPEN_Z_FULL=55;
 let morphP=0, morphNode=null, morphCand=null, reopenBlock=null, morphSounded=false, lastZoomOutT=0;
 function drawTree(now){
   if(!treeActive) return;
@@ -540,33 +557,34 @@ function drawTree(now){
     g2.globalAlpha=1;
   });
   /* ---- proximity morph: bubble becomes the lesson ---- */
-  let cand=null, candR=0;
+  let cand=null, candZ=1e9;
   nodes.forEach(n=>{
     if(n.kind!=='chapter'&&n.kind!=='bridge') return;
     if(n._sx===undefined) return;
     const dC=Math.hypot(n._sx-W/2, n._sy-H*0.5);
-    /* must be near the screen center AND near the focus plane (not a fly-by node between camera and target) */
-    if(dC<Math.min(W,H)*0.25 && n._sz>cam.dist*0.55 && n._sz<cam.dist*1.7 && n._sr>candR){ candR=n._sr; cand=n; }
+    /* purely position-based: the closest bubble you're roughly facing can open */
+    if(dC<Math.min(W,H)*0.28 && n._sz>30 && n._sz<cam.dist*1.8 && n._sz<candZ){ candZ=n._sz; cand=n; }
   });
   morphCand=cand;
-  if(reopenBlock && (cand!==reopenBlock || candR<40)) reopenBlock=null;
-  const targetP=(cand && cand!==reopenBlock)? Math.max(0,Math.min(1,(candR-OPEN_START)/(OPEN_FULL-OPEN_START))) : 0;
-  /* past 60%: the bubble gently pulls you the rest of the way in (unless you're actively backing out) */
-  if(targetP>0.6 && targetP<1 && now-lastZoomOutT>450){
-    cam.dist=Math.max(42,cam.dist*0.962);
-    cam.target=cam.target.map((v,i)=>v+(cand.pos[i]-v)*0.12);
+  if(reopenBlock && (cand!==reopenBlock || candZ>140)) reopenBlock=null;
+  let targetP=(cand && cand!==reopenBlock)? Math.max(0,Math.min(1,(OPEN_Z_START-candZ)/(OPEN_Z_START-OPEN_Z_FULL))) : 0;
+  if(camAnim && morphLock!==null && (morphLock==='block'||cand!==morphLock)) targetP=0;
+  /* past 55%: the bubble gently pulls you the rest of the way in (unless you're actively backing out) */
+  if(targetP>0.55 && targetP<1 && now-lastZoomOutT>450){
+    cam.dist=Math.max(45,cam.dist+(50-cam.dist)*0.12);
+    cam.target=cam.target.map((v,i)=>v+(cand.pos[i]-v)*0.15);
   }
   morphP+=(targetP-morphP)*0.28;
   if(morphP>0.03 && cand){
     morphNode=cand;
     if(!morphSounded && morphP>0.12){ morphSounded=true; S.woosh(); }
     const maxR=Math.hypot(W,H);
-    const rr=candR + morphP*morphP*maxR;
+    const rr=cand._sr + morphP*morphP*maxR;
     g2.globalAlpha=Math.min(1,morphP*1.5);
     g2.fillStyle=cand.color;
     g2.beginPath(); g2.arc(cand._sx,cand._sy,rr,0,6.28); g2.fill();
     g2.globalAlpha=Math.min(1,morphP*1.8);
-    g2.font=(candR*(1+morphP*2))+'px system-ui';
+    g2.font=(cand._sr*(1+morphP*2))+'px system-ui';
     g2.textAlign='center'; g2.textBaseline='middle';
     g2.fillText(cand.emoji, cand._sx, cand._sy);
     g2.globalAlpha=1;
@@ -606,10 +624,15 @@ canvas.addEventListener('pointermove',e=>{
     const ps=[...pointers.values()];
     const d=Math.hypot(ps[0].x-ps[1].x, ps[0].y-ps[1].y);
     if(pinchD>0){
-      const nd=cam.dist*pinchD/d;
-      if(nd<cam.dist && morphCand) cam.target=cam.target.map((v,i)=>v+(morphCand.pos[i]-v)*0.10);
-      else if(nd>cam.dist) lastZoomOutT=performance.now();
-      cam.dist=Math.max(42,Math.min(760,nd));
+      const ratio=pinchD/d;   /* <1 means fingers spread = fly in */
+      if(ratio<1){
+        if(cam.dist>FLY_DIST) cam.dist=Math.max(FLY_DIST,cam.dist*ratio);
+        else flyForward((1-ratio)*420);   /* FLIGHT: move through space from where you are */
+        if(morphCand) cam.target=cam.target.map((v,i)=>v+(morphCand.pos[i]-v)*0.06);
+      } else {
+        lastZoomOutT=performance.now();
+        cam.dist=Math.min(760,cam.dist*ratio);
+      }
     }
     pinchD=d; dragMoved=true;
     return;
@@ -635,9 +658,14 @@ canvas.addEventListener('pointerup',endPointer);
 canvas.addEventListener('pointercancel',endPointer);
 canvas.addEventListener('wheel',e=>{
   e.preventDefault();
-  if(e.deltaY<0 && morphCand) cam.target=cam.target.map((v,i)=>v+(morphCand.pos[i]-v)*0.10);
-  else if(e.deltaY>0) lastZoomOutT=performance.now();
-  cam.dist=Math.max(42,Math.min(760,cam.dist*Math.exp(e.deltaY*0.0011)));
+  if(e.deltaY<0){
+    if(cam.dist>FLY_DIST) cam.dist=Math.max(FLY_DIST,cam.dist*Math.exp(e.deltaY*0.0011));
+    else flyForward(Math.min(240,-e.deltaY)*0.4);   /* FLIGHT: zoom moves you through space */
+    if(morphCand) cam.target=cam.target.map((v,i)=>v+(morphCand.pos[i]-v)*0.08);
+  } else {
+    lastZoomOutT=performance.now();
+    cam.dist=Math.min(760,cam.dist*Math.exp(e.deltaY*0.0011));
+  }
   lastInteract=performance.now();
 },{passive:false});
 window.addEventListener('pointermove',e=>{
@@ -660,8 +688,9 @@ let hintFlashT=null;
 function flashHint(msg,ms){
   treeHintEl.innerHTML=msg;
   clearTimeout(hintFlashT);
-  hintFlashT=setTimeout(()=>{ treeHintEl.innerHTML='Drag to float through the web 🌀 · Zoom close to a bubble and it <b>becomes</b> the lesson!'; },ms||3500);
+  hintFlashT=setTimeout(()=>{ treeHintEl.innerHTML='Drag to look around 🌀 · Zoom to <b>fly</b> 🚀 · Fly into a bubble and it becomes the lesson!'; },ms||3500);
 }
+document.getElementById('homeBtn').addEventListener('click',()=>{ S.pop(); flyTo(HOME.target,HOME.dist,null,900); });
 function hideCard(){ selectedNode=null; }
 function handleTap(x,y){
   const n=hitTest(x,y);
@@ -669,8 +698,8 @@ function handleTap(x,y){
   selectedNode=n;
   S.pop();
   if(n.kind==='chapter'||n.kind==='bridge'){
-    flashHint('✨ Floating into <b>'+n.label+'</b>…');
-    flyTo(n.pos,58,null,1050);
+    flashHint('✨ Flying into <b>'+n.label+'</b>…');
+    flyTo(n.pos,58,null,1050,null,n);
   } else if(n.kind==='topic'){
     flashHint(n.emoji+' <b>Chapter '+n.topic.chNum+': '+n.topic.label+'</b> — '+n.topic.desc);
     speak('Chapter '+n.topic.chNum+': '+n.topic.label+'. '+n.topic.desc+' Float into one of the numbered bubbles around it!');
@@ -789,7 +818,8 @@ function closeLesson(){
   lessonScreen.classList.remove('show');
   treeActive=true;
   hideCard();
-  cam.dist=Math.max(cam.dist,360);   /* float back out so the lesson doesn't instantly re-open */
+  flyForward(-200);                   /* step back from the bubble you were inside */
+  cam.dist=Math.max(cam.dist,320);    /* and pull the view out so it doesn't instantly re-open */
   updateStarHud();
   requestAnimationFrame(drawTree);
 }
@@ -3162,7 +3192,7 @@ updateStarHud();
 requestAnimationFrame(drawTree);
 /* tiny hook for automated testing & tinkering (harmless in normal use) */
 window.__LT={ openLesson:openLesson, closeLesson:closeLesson, TOPICS:TOPICS, LESSONS:LESSONS,
-  cam:cam, flyTo:flyTo, BRIDGES:BRIDGES, progress:()=>progress };
+  cam:cam, flyTo:flyTo, BRIDGES:BRIDGES, HOME:HOME, progress:()=>progress };
 /* PWA: works offline after first visit when hosted (no-op when opened as a plain file) */
 if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
   window.addEventListener('load',()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
