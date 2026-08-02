@@ -437,14 +437,23 @@ function camForward(){
   const cy=Math.cos(cam.yaw), sy=Math.sin(cam.yaw), cp=Math.cos(cam.pitch), sp=Math.sin(cam.pitch);
   return [-cp*sy, sp, cp*cy];
 }
-function flyForward(delta){
-  const f=camForward();
-  cam.target=cam.target.map((v,i)=>v+f[i]*delta);
+function flyMove(dir,delta){
+  cam.target=cam.target.map((v,i)=>v+dir[i]*delta);
   /* stay inside the web's neighborhood */
   const C=[0,140,-10];
   const d=Math.hypot(cam.target[0]-C[0],cam.target[1]-C[1],cam.target[2]-C[2]);
   if(d>720) cam.target=cam.target.map((v,i)=>C[i]+(v-C[i])*720/d);
 }
+function flyForward(delta){ flyMove(camForward(),delta); }
+/* world-space direction of the ray through a screen pixel */
+function screenRay(mx,my){
+  let vx=(mx-W/2)/FOCAL, vy=(H*0.56-my)/FOCAL, vz=1;
+  const n=Math.hypot(vx,vy,vz); vx/=n; vy/=n; vz/=n;
+  const cy=Math.cos(cam.yaw), sy=Math.sin(cam.yaw), cp=Math.cos(cam.pitch), sp=Math.sin(cam.pitch);
+  const y=vy*cp+vz*sp, z1=-vy*sp+vz*cp;
+  return [vx*cy-z1*sy, y, vx*sy+z1*cy];
+}
+const zoomPt={x:0,y:0,t:0};   /* where the user is zooming toward, in screen px */
 let morphLock=null;   /* while a tap-flight is animating, only its destination may open */
 let camAnim=null;
 function flyTo(target,dist,yaw,ms,done,lockNode){
@@ -476,7 +485,26 @@ let lastInteract=0, treeActive=true, hoverNode=null, selectedNode=null;
 /* proximity auto-open: purely distance-based — fly within OPEN_Z_START units of a bubble
    (while roughly facing it) and it morphs into its lesson */
 const OPEN_Z_START=110, OPEN_Z_FULL=55;
-let morphP=0, morphNode=null, morphCand=null, reopenBlock=null, morphSounded=false, lastZoomOutT=0;
+let morphP=0, morphNode=null, morphCand=null, morphCandZ=1e9, reopenBlock=null, morphSounded=false, lastZoomOutT=0;
+/* slow down as you approach a bubble so you glide in instead of blasting past it */
+function flightBrake(delta){
+  if(morphCand && morphCandZ<170) return delta*Math.max(0.12,(morphCandZ-50)/170);
+  return delta;
+}
+/* magnet flight: when a bubble is near your aim, bend the flight path to intercept it
+   (a fixed-pixel ray never quite converges — this closes the last gap) */
+function interceptRay(ray){
+  if(!morphCand||morphCandZ>260) return ray;
+  const f=camForward();
+  const P=cam.target.map((v,i)=>v-f[i]*cam.dist);
+  let dn=morphCand.pos.map((v,i)=>v-P[i]);
+  const L=Math.hypot(dn[0],dn[1],dn[2])||1;
+  dn=dn.map(v=>v/L);
+  const w=Math.min(0.9,Math.max(0,1-morphCandZ/260));
+  const m=[ray[0]*(1-w)+dn[0]*w, ray[1]*(1-w)+dn[1]*w, ray[2]*(1-w)+dn[2]*w];
+  const n=Math.hypot(m[0],m[1],m[2])||1;
+  return [m[0]/n,m[1]/n,m[2]/n];
+}
 function drawTree(now){
   if(!treeActive) return;
   const t=now/1000;
@@ -557,15 +585,18 @@ function drawTree(now){
     g2.globalAlpha=1;
   });
   /* ---- proximity morph: bubble becomes the lesson ---- */
-  let cand=null, candZ=1e9;
+  let cand=null, candZ=1e9, candD=1e9;
+  /* bubbles open near where you're zooming (cursor/pinch point), falling back to screen center */
+  const zRecent=(now-zoomPt.t<1500);
+  const refX=zRecent?zoomPt.x:W/2, refY=zRecent?zoomPt.y:H*0.5;
   nodes.forEach(n=>{
     if(n.kind!=='chapter'&&n.kind!=='bridge') return;
     if(n._sx===undefined) return;
-    const dC=Math.hypot(n._sx-W/2, n._sy-H*0.5);
-    /* purely position-based: the closest bubble you're roughly facing can open */
-    if(dC<Math.min(W,H)*0.28 && n._sz>30 && n._sz<cam.dist*1.8 && n._sz<candZ){ candZ=n._sz; cand=n; }
+    const dC=Math.hypot(n._sx-refX, n._sy-refY);
+    /* the bubble closest to your AIM POINT is the one that can open */
+    if(dC<Math.min(W,H)*0.34 && n._sz>30 && n._sz<cam.dist*1.8 && dC<candD){ candD=dC; candZ=n._sz; cand=n; }
   });
-  morphCand=cand;
+  morphCand=cand; morphCandZ=candZ;
   if(reopenBlock && (cand!==reopenBlock || candZ>140)) reopenBlock=null;
   let targetP=(cand && cand!==reopenBlock)? Math.max(0,Math.min(1,(OPEN_Z_START-candZ)/(OPEN_Z_START-OPEN_Z_FULL))) : 0;
   if(camAnim && morphLock!==null && (morphLock==='block'||cand!==morphLock)) targetP=0;
@@ -625,10 +656,17 @@ canvas.addEventListener('pointermove',e=>{
     const d=Math.hypot(ps[0].x-ps[1].x, ps[0].y-ps[1].y);
     if(pinchD>0){
       const ratio=pinchD/d;   /* <1 means fingers spread = fly in */
+      const mx=(ps[0].x+ps[1].x)/2, my=(ps[0].y+ps[1].y)/2;   /* zoom toward the pinch midpoint */
       if(ratio<1){
-        if(cam.dist>FLY_DIST) cam.dist=Math.max(FLY_DIST,cam.dist*ratio);
-        else flyForward((1-ratio)*420);   /* FLIGHT: move through space from where you are */
-        if(morphCand) cam.target=cam.target.map((v,i)=>v+(morphCand.pos[i]-v)*0.06);
+        zoomPt.x=mx; zoomPt.y=my; zoomPt.t=performance.now();
+        const ray=screenRay(mx,my);
+        if(cam.dist>FLY_DIST){
+          const k=Math.max(FLY_DIST/cam.dist, ratio);
+          const f=camForward();
+          const Pc=cam.target.map((v,i)=>v-f[i]*cam.dist+ray[i]*cam.dist);
+          cam.dist=cam.dist*k;
+          cam.target=cam.target.map((v,i)=>v+(Pc[i]-v)*(1-k));
+        } else flyMove(interceptRay(ray),flightBrake((1-ratio)*420));   /* FLIGHT: fly toward your fingers */
       } else {
         lastZoomOutT=performance.now();
         cam.dist=Math.min(760,cam.dist*ratio);
@@ -664,9 +702,16 @@ canvas.addEventListener('pointercancel',endPointer);
 canvas.addEventListener('wheel',e=>{
   e.preventDefault();
   if(e.deltaY<0){
-    if(cam.dist>FLY_DIST) cam.dist=Math.max(FLY_DIST,cam.dist*Math.exp(e.deltaY*0.0011));
-    else flyForward(Math.min(240,-e.deltaY)*0.4);   /* FLIGHT: zoom moves you through space */
-    if(morphCand) cam.target=cam.target.map((v,i)=>v+(morphCand.pos[i]-v)*0.08);
+    zoomPt.x=e.clientX; zoomPt.y=e.clientY; zoomPt.t=performance.now();
+    const ray=screenRay(e.clientX,e.clientY);
+    if(cam.dist>FLY_DIST){
+      /* maps-style: keep the point under the cursor fixed while zooming toward it */
+      const k=Math.max(FLY_DIST/cam.dist, Math.exp(e.deltaY*0.0011));
+      const f=camForward();
+      const Pc=cam.target.map((v,i)=>v-f[i]*cam.dist+ray[i]*cam.dist);
+      cam.dist=cam.dist*k;
+      cam.target=cam.target.map((v,i)=>v+(Pc[i]-v)*(1-k));
+    } else flyMove(interceptRay(ray), flightBrake(Math.min(240,-e.deltaY)*0.4));   /* FLIGHT: fly toward the cursor */
   } else {
     lastZoomOutT=performance.now();
     cam.dist=Math.min(760,cam.dist*Math.exp(e.deltaY*0.0011));
