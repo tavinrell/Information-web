@@ -212,7 +212,7 @@
     <p id="cardDesc"></p>
     <div id="cardBtns"></div>
   </div>
-  <div id="treeHint">Drag to look around 🌀 · Zoom to <b>fly</b> 🚀 · Fly into a bubble and it becomes the lesson!</div>
+  <div id="treeHint">Drag to glide around 🗺️ · Zoom into a lesson bubble and it opens!</div>
 </div>
 <!-- ================= LESSON SCREEN ================= -->
 <div id="lessonScreen">
@@ -329,75 +329,79 @@ function starTotal(){ return Object.keys(progress).filter(k=>progress[k]).length
 function starMax(){ return TOPICS.reduce((s,t)=>s+t.sections.length,0); }
 function updateStarHud(){ document.getElementById('starCount').textContent='⭐ '+starTotal()+'/'+starMax(); }
 /* ================================================================
-   TOPIC / CHAPTER DATA
+   TOPIC / CHAPTER DATA  (2D map — labels are topic names, not numbers)
 ================================================================ */
-/* Textbook structure: MATH → numbered chapters → numbered sections (3.1, 3.2, …) */
-function stdSections(n){
-  return [
-    {id:'s1', num:n+'.1', title:'How the Numbers Work', emoji:'🔢'},
-    {id:'s2', num:n+'.2', title:'On a Graph',           emoji:'📈'},
-    {id:'s3', num:n+'.3', title:'In the Real World',    emoji:'🌍'}
-  ];
-}
-const SEC3=[
-  {id:'s1', num:'3.1', title:'What Addition Really Is',      emoji:'🍎'},
-  {id:'s2', num:'3.2', title:'Order Doesn\'t Matter',        emoji:'🚂'},
-  {id:'s3', num:'3.3', title:'What Subtraction Really Is',   emoji:'🍪'},
-  {id:'s4', num:'3.4', title:'Fact Families',                emoji:'🔺'},
-  {id:'s5', num:'3.5', title:'Adding Bigger Numbers',        emoji:'🧱'},
-  {id:'s6', num:'3.6', title:'Subtracting Bigger Numbers',   emoji:'🔁'},
-  {id:'s7', num:'3.7', title:'Mental Math: Making Tens',     emoji:'🧠'},
-  {id:'s8', num:'3.8', title:'Word Problems',                emoji:'📖'},
-  {id:'s9', num:'3.9', title:'On a Graph',                   emoji:'📈'},
-  {id:'s10',num:'3.10',title:'In the Real World',            emoji:'🌍'}
-];
 const TOPICS=[
   {chNum:3, id:'addsub',  label:'Addition & Subtraction',   short:'Add · Subtract',  emoji:'🍎', color:'#37B45F',
-   desc:'Putting together, taking apart, and the big idea that connects them.', pos:[-52,30,28], sections:SEC3},
+   desc:'Putting together, taking apart, and the big idea that connects them.', pos:[-520,430], ringR:265, sections:[
+    {id:'s1', num:'3.1', title:'What Adding Is',       emoji:'🍎'},
+    {id:'s2', num:'3.2', title:'Any Order Works',      emoji:'🚂'},
+    {id:'s3', num:'3.3', title:'Taking Away',          emoji:'🍪'},
+    {id:'s4', num:'3.4', title:'Fact Families',        emoji:'🔺'},
+    {id:'s5', num:'3.5', title:'2-Digit Addition',     emoji:'🧱'},
+    {id:'s6', num:'3.6', title:'2-Digit Subtraction',  emoji:'🔁'},
+    {id:'s7', num:'3.7', title:'Mental Math Tricks',   emoji:'🧠'},
+    {id:'s8', num:'3.8', title:'Word Problems',        emoji:'📖'},
+    {id:'s9', num:'3.9', title:'Adding on Graphs',     emoji:'📈'},
+    {id:'s10',num:'3.10',title:'Money & Real Life',    emoji:'🌍'}
+  ]},
   {chNum:4, id:'muldiv',  label:'Multiplication & Division', short:'Multiply · Divide', emoji:'🍪', color:'#5FA8E8',
-   desc:'Adding in big jumps, and sharing things out fairly.', pos:[60,125,-18], sections:stdSections(4)},
+   desc:'Adding in big jumps, and sharing things out fairly.', pos:[560,140], ringR:215, sections:[
+    {id:'s1', num:'4.1', title:'What Multiplying Is',  emoji:'✖️'},
+    {id:'s2', num:'4.2', title:'What Dividing Is',     emoji:'➗'},
+    {id:'s3', num:'4.3', title:'Lines & Ramps',        emoji:'📈'},
+    {id:'s4', num:'4.4', title:'Wheels, Pizza & Coins',emoji:'🌍'}
+  ]},
   {chNum:5, id:'exproot', label:'Exponents & Square Roots', short:'Powers · Roots', emoji:'🚀', color:'#F5A623',
-   desc:'Numbers that grow super fast — and how to shrink them back.', pos:[-70,210,-30], sections:stdSections(5)},
+   desc:'Numbers that grow super fast — and how to shrink them back.', pos:[-560,-460], ringR:215, sections:[
+    {id:'s1', num:'5.1', title:'What Powers Are',      emoji:'🚀'},
+    {id:'s2', num:'5.2', title:'Square Roots',         emoji:'🌱'},
+    {id:'s3', num:'5.3', title:'The Rocket Curve',     emoji:'📈'},
+    {id:'s4', num:'5.4', title:'Folding, Tiles & Germs',emoji:'🌍'}
+  ]},
   {chNum:6, id:'calc',    label:'Derivatives & Integrals', short:'Change · Adding up', emoji:'🎢', color:'#E8503A',
-   desc:'The math of change: how fast things move, and adding tiny pieces.', pos:[55,295,26], sections:stdSections(6)}
+   desc:'The math of change: how fast things move, and adding tiny pieces.', pos:[520,-950], ringR:215, sections:[
+    {id:'s1', num:'6.1', title:'How Fast Things Change', emoji:'⛰️'},
+    {id:'s2', num:'6.2', title:'Adding Tiny Pieces',     emoji:'🌧️'},
+    {id:'s3', num:'6.3', title:'Slopes & Areas',         emoji:'📐'},
+    {id:'s4', num:'6.4', title:"Zoomy's Dashboard",      emoji:'🚗'}
+  ]}
 ];
 /* build node list */
 const nodes=[];
-const mathRoot={kind:'root', id:'mathRoot', label:'MATH', emoji:'🌱', color:'#8ED081', pos:[0,-58,8], r:20};
+const mathRoot={kind:'root', id:'mathRoot', label:'MATH', emoji:'🌱', color:'#8ED081', pos:[0,1150], r:95};
 nodes.push(mathRoot);
-/* chapters 1 & 2 exist in the book but aren't built yet — shown as ghosts so the numbering makes sense */
-const ghostCh1={kind:'ghost', id:'gCh1', label:'Ch 1 · Counting (soon)',    emoji:'🔢', color:'#8ED081', pos:[95,-25,-30], r:12};
-const ghostCh2={kind:'ghost', id:'gCh2', label:'Ch 2 · Place Value (soon)', emoji:'💯', color:'#8ED081', pos:[-115,-10,-45], r:12};
+const ghostCh1={kind:'ghost', id:'gCh1', label:'Ch 1 · Counting (soon)',    emoji:'🔢', color:'#8ED081', pos:[640,1030], r:60};
+const ghostCh2={kind:'ghost', id:'gCh2', label:'Ch 2 · Place Value (soon)', emoji:'💯', color:'#8ED081', pos:[-660,1010], r:60};
 nodes.push(ghostCh1, ghostCh2);
 TOPICS.forEach(t=>{
-  const tn={kind:'topic', id:t.id, topic:t, label:'Ch '+t.chNum+' · '+t.short, emoji:t.emoji, color:t.color, pos:t.pos, r:17};
+  const tn={kind:'topic', id:t.id, topic:t, label:t.label, emoji:t.emoji, color:t.color, pos:t.pos, r:88};
   nodes.push(tn); t.node=tn;
   const N=t.sections.length;
-  const R=N>6?68:38;
   t.chNodes=t.sections.map((c,i)=>{
     const a=(i/N)*Math.PI*2 - Math.PI/2;
     const n={kind:'chapter', id:t.id+'.'+c.id, topic:t, chapter:c, chIndex:i,
-      label:c.num, emoji:c.emoji, color:t.color,
-      pos:[t.pos[0]+Math.cos(a)*R, t.pos[1]+Math.sin(a)*R*0.8, t.pos[2]+Math.sin(a*2)*16], r:N>6?8.5:10};
+      label:c.title, emoji:c.emoji, color:t.color,
+      pos:[t.pos[0]+Math.cos(a)*t.ringR, t.pos[1]+Math.sin(a)*t.ringR], r:48};
     nodes.push(n); return n;
   });
 });
-const sciRoot={kind:'ghostRoot', id:'sciRoot', label:'SCIENCE · growing soon', emoji:'🔬', color:'#B08BD9', pos:[210,90,-70], r:18};
+const sciRoot={kind:'ghostRoot', id:'sciRoot', label:'SCIENCE · growing soon', emoji:'🔬', color:'#B08BD9', pos:[1400,430], r:75};
 nodes.push(sciRoot);
-[['Physics','⚛️',[175,300,-30]],['Chemistry','🧪',[245,190,-85]],['Biology','🌿',[-185,275,-70]]].forEach(g=>{
-  nodes.push({kind:'ghost', id:'g'+g[0], label:g[0], emoji:g[1], color:'#B08BD9', pos:g[2], r:11});
+[['Physics','⚛️',[1180,-950]],['Chemistry','🧪',[1460,-260]],['Biology','🌿',[-1360,-840]]].forEach(g=>{
+  nodes.push({kind:'ghost', id:'g'+g[0], label:g[0], emoji:g[1], color:'#B08BD9', pos:g[2], r:50});
 });
 /* shared-concept bridge nodes: where math and science hold hands */
 const BRIDGES=[
-  {id:'br-growth', label:'Growth', emoji:'🦠', color:'#9BCB3B', pos:[-135,245,-50],
-   topicIdx:2, chIdx:2, ghostId:'gBiology',
+  {id:'br-growth', label:'Growth', emoji:'🦠', color:'#9BCB3B', pos:[-960,-650],
+   topicIdx:2, chIdx:3, ghostId:'gBiology',
    blurb:'Where exponents meet biology — living things grow by doubling!'},
-  {id:'br-motion', label:'Motion', emoji:'🏎️', color:'#E86FA4', pos:[118,298,-4],
-   topicIdx:3, chIdx:2, ghostId:'gPhysics',
+  {id:'br-motion', label:'Motion', emoji:'🏎️', color:'#E86FA4', pos:[850,-950],
+   topicIdx:3, chIdx:3, ghostId:'gPhysics',
    blurb:'Where calculus meets physics — speed, distance and change!'}
 ];
 BRIDGES.forEach(b=>{
-  const n={kind:'bridge', id:b.id, label:b.label, emoji:b.emoji, color:b.color, pos:b.pos, r:9, bridge:b};
+  const n={kind:'bridge', id:b.id, label:b.label, emoji:b.emoji, color:b.color, pos:b.pos, r:42, bridge:b};
   nodes.push(n); b.node=n;
   b.chRef=TOPICS[b.topicIdx].chNodes[b.chIdx];
 });
@@ -410,106 +414,63 @@ TOPICS.forEach(t=>t.chNodes.forEach(c=>edges.push([t.node,c,true])));
 edges.push([sciRoot, nodes.find(n=>n.id==='gPhysics'), true]);
 edges.push([sciRoot, nodes.find(n=>n.id==='gChemistry'), true]);
 edges.push([sciRoot, nodes.find(n=>n.id==='gBiology'), true]);
-/* glowing cross-subject threads */
 BRIDGES.forEach(b=>{
   edges.push([TOPICS[b.topicIdx].node, b.node, true, 'thread']);
   edges.push([b.node, nodes.find(n=>n.id===b.ghostId), true, 'thread']);
 });
 /* ================================================================
-   3D TREE RENDERER
+   2D MAP RENDERER  —  pan with a finger, zoom toward your cursor,
+   zoom all the way into a bubble and it becomes the lesson
 ================================================================ */
 const canvas=document.getElementById('treeCanvas');
 const g2=canvas.getContext('2d');
-let W=0,H=0,DPR=1;
+let W=0,H=0,DPR=1,sMin=0.2;
+const cam={x:40,y:60,s:0.25};
 function resize(){
   DPR=Math.min(2,window.devicePixelRatio||1);
   W=canvas.clientWidth; H=canvas.clientHeight;
   canvas.width=W*DPR; canvas.height=H*DPR;
   g2.setTransform(DPR,0,0,DPR,0,0);
+  sMin=Math.min(W/3300,H/2750);
+  if(cam.s<sMin*0.85) cam.s=sMin*1.02;
 }
 window.addEventListener('resize',resize);
+const HOME={x:40,y:100};
+const S_MAX=6;
 const stars=[];
 for(let i=0;i<170;i++) stars.push({x:Math.random(), y:Math.random(), r:Math.random()*1.4+.3, tw:Math.random()*6.28, sp:.5+Math.random()});
-const cam={ yaw:-0.5, pitch:0.22, dist:580, target:[0,135,0] };
-const HOME={target:[0,135,0], dist:580};
-const FLY_DIST=150;      /* below this zoom level, zooming = flying forward through space */
-function camForward(){
-  const cy=Math.cos(cam.yaw), sy=Math.sin(cam.yaw), cp=Math.cos(cam.pitch), sp=Math.sin(cam.pitch);
-  return [-cp*sy, sp, cp*cy];
-}
-function flyMove(dir,delta){
-  cam.target=cam.target.map((v,i)=>v+dir[i]*delta);
-  /* stay inside the web's neighborhood */
-  const C=[0,140,-10];
-  const d=Math.hypot(cam.target[0]-C[0],cam.target[1]-C[1],cam.target[2]-C[2]);
-  if(d>720) cam.target=cam.target.map((v,i)=>C[i]+(v-C[i])*720/d);
-}
-function flyForward(delta){ flyMove(camForward(),delta); }
-/* world-space direction of the ray through a screen pixel */
-function screenRay(mx,my){
-  let vx=(mx-W/2)/FOCAL, vy=(H*0.56-my)/FOCAL, vz=1;
-  const n=Math.hypot(vx,vy,vz); vx/=n; vy/=n; vz/=n;
-  const cy=Math.cos(cam.yaw), sy=Math.sin(cam.yaw), cp=Math.cos(cam.pitch), sp=Math.sin(cam.pitch);
-  const y=vy*cp+vz*sp, z1=-vy*sp+vz*cp;
-  return [vx*cy-z1*sy, y, vx*sy+z1*cy];
-}
-const zoomPt={x:0,y:0,t:0};   /* where the user is zooming toward, in screen px */
-let morphLock=null;   /* while a tap-flight is animating, only its destination may open */
-let camAnim=null;
-function flyTo(target,dist,yaw,ms,done,lockNode){
-  const from={t:[...cam.target], d:cam.dist, y:cam.yaw, p:cam.pitch};
-  const to={t:target, d:dist, y:(yaw===null?cam.yaw:yaw), p:cam.pitch};
+/* screen transforms */
+function SX(x){ return W/2+(x-cam.x)*cam.s; }
+function SY(y){ return H/2+(y-cam.y)*cam.s; }
+let camAnim=null, morphLock=null;
+function flyTo(x,y,s,ms,done,lockNode){
+  const from={x:cam.x,y:cam.y,s:cam.s};
   const t0=performance.now();
   morphLock=(lockNode===undefined)?'block':lockNode;
   camAnim={step(now){
     let u=Math.min(1,(now-t0)/ms); u=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
-    cam.target=from.t.map((v,i)=>v+(to.t[i]-v)*u);
-    cam.dist=from.d+(to.d-from.d)*u;
-    cam.yaw=from.y+(to.y-from.y)*u;
+    cam.x=from.x+(x-from.x)*u;
+    cam.y=from.y+(y-from.y)*u;
+    cam.s=from.s+(s-from.s)*u;
     if(u>=1){ camAnim=null; morphLock=null; done&&done(); }
   }};
 }
-const FOCAL=520;
-function project(p){
-  const cy=Math.cos(cam.yaw), sy=Math.sin(cam.yaw);
-  const cp=Math.cos(cam.pitch), sp=Math.sin(cam.pitch);
-  let x=p[0]-cam.target[0], y=p[1]-cam.target[1], z=p[2]-cam.target[2];
-  let x1=x*cy+z*sy, z1=-x*sy+z*cy;
-  let y2=y*cp-z1*sp, z2=y*sp+z1*cp;
-  const zc=z2+cam.dist;
-  if(zc<40) return null;
-  const s=FOCAL/zc;
-  return {x:W/2+x1*s, y:H*0.56-y2*s, s:s, z:zc};
-}
+function goHome(ms){ flyTo(HOME.x,HOME.y,sMin*1.02,ms||900); }
 let lastInteract=0, treeActive=true, hoverNode=null, selectedNode=null;
-/* proximity auto-open: purely distance-based — fly within OPEN_Z_START units of a bubble
-   (while roughly facing it) and it morphs into its lesson */
-const OPEN_Z_START=110, OPEN_Z_FULL=55;
-let morphP=0, morphNode=null, morphCand=null, morphCandZ=1e9, reopenBlock=null, morphSounded=false, lastZoomOutT=0;
-/* slow down as you approach a bubble so you glide in instead of blasting past it */
-function flightBrake(delta){
-  if(morphCand && morphCandZ<170) return delta*Math.max(0.12,(morphCandZ-50)/170);
-  return delta;
-}
-/* magnet flight: when a bubble is near your aim, bend the flight path to intercept it
-   (a fixed-pixel ray never quite converges — this closes the last gap) */
-function interceptRay(ray){
-  if(!morphCand||morphCandZ>260) return ray;
-  const f=camForward();
-  const P=cam.target.map((v,i)=>v-f[i]*cam.dist);
-  let dn=morphCand.pos.map((v,i)=>v-P[i]);
-  const L=Math.hypot(dn[0],dn[1],dn[2])||1;
-  dn=dn.map(v=>v/L);
-  const w=Math.min(0.9,Math.max(0,1-morphCandZ/260));
-  const m=[ray[0]*(1-w)+dn[0]*w, ray[1]*(1-w)+dn[1]*w, ray[2]*(1-w)+dn[2]*w];
-  const n=Math.hypot(m[0],m[1],m[2])||1;
-  return [m[0]/n,m[1]/n,m[2]/n];
+/* proximity auto-open: zoom a bubble big enough (near your zoom point) and it becomes the lesson */
+const OPEN_R_START=95, OPEN_R_FULL=165;
+let morphP=0, morphNode=null, morphCand=null, morphCandR=0, reopenBlock=null, morphSounded=false, lastZoomOutT=0;
+const zoomPt={x:0,y:0,t:0};
+function shade(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  let r=(n>>16)+amt, g=((n>>8)&255)+amt, b=(n&255)+amt;
+  r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b));
+  return 'rgb('+r+','+g+','+b+')';
 }
 function drawTree(now){
   if(!treeActive) return;
   const t=now/1000;
   if(camAnim) camAnim.step(now);
-  else if(now-lastInteract>4000) cam.yaw+=0.0012;
   g2.clearRect(0,0,W,H);
   const bg=g2.createLinearGradient(0,0,0,H);
   bg.addColorStop(0,'#0B1030'); bg.addColorStop(.65,'#1B2559'); bg.addColorStop(1,'#2A3A7C');
@@ -520,90 +481,91 @@ function drawTree(now){
     g2.beginPath(); g2.arc(st.x*W, st.y*H, st.r, 0, 6.28); g2.fill();
   });
   g2.globalAlpha=1;
-  /* project all */
-  const proj=new Map();
-  nodes.forEach(n=>proj.set(n, project(n.pos)));
   /* edges */
   edges.forEach(e=>{
-    const a=proj.get(e[0]), b=proj.get(e[1]);
-    if(!a||!b) return;
+    const ax=SX(e[0].pos[0]), ay=SY(e[0].pos[1]);
+    const bx=SX(e[1].pos[0]), by=SY(e[1].pos[1]);
+    if(Math.max(ax,bx)<-80||Math.min(ax,bx)>W+80||Math.max(ay,by)<-80||Math.min(ay,by)>H+80) return;
     const thread=e[3]==='thread';
     const ghost=!thread&&(e[0].kind==='ghost'||e[0].kind==='ghostRoot'||e[1].kind==='ghost'||e[1].kind==='ghostRoot');
     if(thread){
-      const tw=.5+.5*Math.sin(t*2.2+a.x*.01);
+      const tw=.5+.5*Math.sin(t*2.2+ax*.01);
       g2.strokeStyle='rgba(255,233,74,'+(.35+.4*tw)+')';
-      g2.lineWidth=2.6*Math.min(a.s,b.s);
-      g2.setLineDash([10,8]);
+      g2.lineWidth=Math.max(1.5,5*cam.s);
+      g2.setLineDash([12,9]);
       g2.shadowColor='rgba(255,233,74,.9)'; g2.shadowBlur=8;
     } else {
       g2.strokeStyle=ghost?'rgba(176,139,217,.3)':(e[2]?'rgba(140,190,255,.4)':'rgba(140,225,170,.65)');
-      g2.lineWidth=(e[2]?2:4)*Math.min(a.s,b.s);
+      g2.lineWidth=Math.max(1.5,(e[2]?4:8)*cam.s);
       g2.shadowColor=ghost?'transparent':'rgba(120,200,255,.8)';
       g2.shadowBlur=e[2]?4:10;
     }
     g2.beginPath();
-    const mx=(a.x+b.x)/2, my=(a.y+b.y)/2-18*Math.min(a.s,b.s);
-    g2.moveTo(a.x,a.y); g2.quadraticCurveTo(mx,my,b.x,b.y); g2.stroke();
+    const mx=(ax+bx)/2, my=(ay+by)/2-30*cam.s;
+    g2.moveTo(ax,ay); g2.quadraticCurveTo(mx,my,bx,by); g2.stroke();
     g2.shadowBlur=0; g2.setLineDash([]);
   });
-  /* nodes sorted far→near */
-  const order=[...nodes].sort((a,b)=>proj.get(b) && proj.get(a) ? proj.get(b).z-proj.get(a).z : 0);
-  order.forEach(n=>{
-    const p=proj.get(n); if(!p) return;
-    n._sx=p.x; n._sy=p.y; n._sr=n.r*p.s; n._sz=p.z;
+  /* nodes */
+  nodes.forEach(n=>{
+    const px=SX(n.pos[0]), py=SY(n.pos[1]);
+    n._sx=px; n._sy=py; n._sr=n.r*cam.s;
+    if(px<-160||px>W+160||py<-160||py>H+160) return;
     const ghost=n.kind==='ghost'||n.kind==='ghostRoot';
     const done=(n.kind==='chapter'&&progress[n.id])||(n.kind==='bridge'&&progress[n.bridge.chRef.id]);
     const topicDone=n.kind==='topic'&&n.topic.chNodes.every(c=>progress[c.id]);
     const pulse=1+0.05*Math.sin(t*2.4+n.pos[0]);
-    const r=n._sr*(n===hoverNode||n===selectedNode?1.22:1)*((n.kind==='chapter'||n.kind==='bridge')?pulse:1);
-    g2.globalAlpha=ghost?0.4:1;
-    const grad=g2.createRadialGradient(p.x-r*.3,p.y-r*.35,r*.15,p.x,p.y,r);
+    const r=n._sr*(n===hoverNode||n===selectedNode?1.15:1)*((n.kind==='chapter'||n.kind==='bridge')?pulse:1);
+    g2.globalAlpha=ghost?0.45:1;
+    const grad=g2.createRadialGradient(px-r*.3,py-r*.35,r*.15,px,py,r);
     grad.addColorStop(0,'#ffffff');
     grad.addColorStop(.35,done||topicDone?'#FFE94A':n.color);
     grad.addColorStop(1,shade(done||topicDone?'#E8B400':n.color,-30));
     g2.shadowColor=done||topicDone?'rgba(255,220,60,.9)':n.color;
     g2.shadowBlur=(n===hoverNode||n===selectedNode)?26:14;
     g2.fillStyle=grad;
-    g2.beginPath(); g2.arc(p.x,p.y,r,0,6.28); g2.fill();
+    g2.beginPath(); g2.arc(px,py,r,0,6.28); g2.fill();
     g2.shadowBlur=0;
-    g2.lineWidth=Math.max(1.5,2.5*p.s);
+    g2.lineWidth=Math.max(1.5,3.5*cam.s);
     g2.strokeStyle='rgba(20,26,60,.85)';
     g2.stroke();
-    /* emoji */
-    g2.font=(r*1.05)+'px system-ui';
+    g2.font=(r*1.02)+'px system-ui';
     g2.textAlign='center'; g2.textBaseline='middle';
-    g2.fillText(done?'⭐':n.emoji, p.x, p.y+r*0.05);
-    /* label */
-    if(r>7){
-      const fs=Math.max(9,Math.min(17,r*0.55));
+    g2.fillText(done?'⭐':n.emoji, px, py+r*0.05);
+    /* labels: topic names, not numbers */
+    if(r>15){
+      const fs=Math.max(10,Math.min(24,r*0.42));
       g2.font='800 '+fs+"px 'Baloo 2',cursive";
       g2.fillStyle=ghost?'rgba(210,190,240,.75)':'#EAF2FF';
       g2.shadowColor='rgba(0,0,0,.7)'; g2.shadowBlur=4;
-      g2.fillText(n.label, p.x, p.y+r+fs*0.9);
+      g2.fillText(n.label, px, py+r+fs*0.95);
+      if(n.kind==='topic'){
+        g2.font='800 '+(fs*0.78)+"px 'Baloo 2',cursive";
+        g2.fillStyle='#9FB4E8';
+        g2.fillText('Chapter '+n.topic.chNum, px, py-r-fs*0.55);
+      }
       g2.shadowBlur=0;
     }
     g2.globalAlpha=1;
   });
   /* ---- proximity morph: bubble becomes the lesson ---- */
-  let cand=null, candZ=1e9, candD=1e9;
-  /* bubbles open near where you're zooming (cursor/pinch point), falling back to screen center */
+  let cand=null, candR=0, candD=1e9;
   const zRecent=(now-zoomPt.t<1500);
   const refX=zRecent?zoomPt.x:W/2, refY=zRecent?zoomPt.y:H*0.5;
   nodes.forEach(n=>{
     if(n.kind!=='chapter'&&n.kind!=='bridge') return;
     if(n._sx===undefined) return;
     const dC=Math.hypot(n._sx-refX, n._sy-refY);
-    /* the bubble closest to your AIM POINT is the one that can open */
-    if(dC<Math.min(W,H)*0.34 && n._sz>30 && n._sz<cam.dist*1.8 && dC<candD){ candD=dC; candZ=n._sz; cand=n; }
+    if(dC<Math.min(W,H)*0.34 && dC<candD){ candD=dC; candR=n._sr; cand=n; }
   });
-  morphCand=cand; morphCandZ=candZ;
-  if(reopenBlock && (cand!==reopenBlock || candZ>140)) reopenBlock=null;
-  let targetP=(cand && cand!==reopenBlock)? Math.max(0,Math.min(1,(OPEN_Z_START-candZ)/(OPEN_Z_START-OPEN_Z_FULL))) : 0;
+  morphCand=cand; morphCandR=candR;
+  if(reopenBlock && (cand!==reopenBlock || candR<70)) reopenBlock=null;
+  let targetP=(cand && cand!==reopenBlock)? Math.max(0,Math.min(1,(candR-OPEN_R_START)/(OPEN_R_FULL-OPEN_R_START))) : 0;
   if(camAnim && morphLock!==null && (morphLock==='block'||cand!==morphLock)) targetP=0;
-  /* past 55%: the bubble gently pulls you the rest of the way in (unless you're actively backing out) */
-  if(targetP>0.55 && targetP<1 && now-lastZoomOutT>450){
-    cam.dist=Math.max(45,cam.dist+(50-cam.dist)*0.12);
-    cam.target=cam.target.map((v,i)=>v+(cand.pos[i]-v)*0.15);
+  /* past 55%: the bubble gently pulls you in (unless you're actively backing out) */
+  if(targetP>0.55 && targetP<1 && now-lastZoomOutT>450 && !camAnim){
+    cam.s=Math.min(S_MAX,cam.s*1.045);
+    cam.x+=(cand.pos[0]-cam.x)*0.14;
+    cam.y+=(cand.pos[1]-cam.y)*0.14;
   }
   morphP+=(targetP-morphP)*0.28;
   if(morphP>0.03 && cand){
@@ -615,28 +577,31 @@ function drawTree(now){
     g2.fillStyle=cand.color;
     g2.beginPath(); g2.arc(cand._sx,cand._sy,rr,0,6.28); g2.fill();
     g2.globalAlpha=Math.min(1,morphP*1.8);
-    g2.font=(cand._sr*(1+morphP*2))+'px system-ui';
+    g2.font=(cand._sr*(1+morphP*1.6))+'px system-ui';
     g2.textAlign='center'; g2.textBaseline='middle';
     g2.fillText(cand.emoji, cand._sx, cand._sy);
     g2.globalAlpha=1;
     if(morphP>=0.94){
       reopenBlock=cand; morphP=0; morphNode=null; morphSounded=false;
-      cam.dist=Math.max(cam.dist,HOME.dist*0.75);
+      cam.s=Math.min(cam.s,1.1);
       openLesson(cand.kind==='bridge'? cand.bridge.chRef : cand);
     }
   } else { morphSounded=false; }
   requestAnimationFrame(drawTree);
 }
-function shade(hex,amt){
-  const n=parseInt(hex.slice(1),16);
-  let r=(n>>16)+amt, g=((n>>8)&255)+amt, b=(n&255)+amt;
-  r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b));
-  return 'rgb('+r+','+g+','+b+')';
-}
-/* ---------- tree input ---------- */
+/* ---------- map input: pan, cursor-anchored zoom, tap ---------- */
 let dragging=false, dragMoved=false, lastX=0, lastY=0;
 const pointers=new Map();
-let pinchD=0;
+let pinchD=0, pinchMid=null;
+function zoomAt(mx,my,k){
+  const ns=Math.max(sMin*0.85,Math.min(S_MAX,cam.s*k));
+  const wx=cam.x+(mx-W/2)/cam.s, wy=cam.y+(my-H/2)/cam.s;
+  cam.s=ns;
+  cam.x=wx-(mx-W/2)/cam.s;
+  cam.y=wy-(my-H/2)/cam.s;
+  if(k>1){ zoomPt.x=mx; zoomPt.y=my; zoomPt.t=performance.now(); }
+  else lastZoomOutT=performance.now();
+}
 canvas.addEventListener('pointerdown',e=>{
   canvas.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -644,6 +609,7 @@ canvas.addEventListener('pointerdown',e=>{
   else if(pointers.size===2){
     const ps=[...pointers.values()];
     pinchD=Math.hypot(ps[0].x-ps[1].x, ps[0].y-ps[1].y);
+    pinchMid={x:(ps[0].x+ps[1].x)/2, y:(ps[0].y+ps[1].y)/2};
   }
   lastInteract=performance.now();
 });
@@ -654,44 +620,23 @@ canvas.addEventListener('pointermove',e=>{
   if(pointers.size===2){
     const ps=[...pointers.values()];
     const d=Math.hypot(ps[0].x-ps[1].x, ps[0].y-ps[1].y);
-    if(pinchD>0){
-      const ratio=pinchD/d;   /* <1 means fingers spread = fly in */
-      const mx=(ps[0].x+ps[1].x)/2, my=(ps[0].y+ps[1].y)/2;   /* zoom toward the pinch midpoint */
-      if(ratio<1){
-        zoomPt.x=mx; zoomPt.y=my; zoomPt.t=performance.now();
-        const ray=screenRay(mx,my);
-        if(cam.dist>FLY_DIST){
-          const k=Math.max(FLY_DIST/cam.dist, ratio);
-          const f=camForward();
-          const Pc=cam.target.map((v,i)=>v-f[i]*cam.dist+ray[i]*cam.dist);
-          cam.dist=cam.dist*k;
-          cam.target=cam.target.map((v,i)=>v+(Pc[i]-v)*(1-k));
-        } else flyMove(interceptRay(ray),flightBrake((1-ratio)*420));   /* FLIGHT: fly toward your fingers */
-      } else {
-        lastZoomOutT=performance.now();
-        cam.dist=Math.min(760,cam.dist*ratio);
-      }
-    }
-    pinchD=d; dragMoved=true;
+    const mid={x:(ps[0].x+ps[1].x)/2, y:(ps[0].y+ps[1].y)/2};
+    if(pinchD>0) zoomAt(mid.x,mid.y,d/pinchD);
+    if(pinchMid){ cam.x-=(mid.x-pinchMid.x)/cam.s; cam.y-=(mid.y-pinchMid.y)/cam.s; }
+    pinchD=d; pinchMid=mid; dragMoved=true;
     return;
   }
   if(!dragging) return;
   const dx=e.clientX-lastX, dy=e.clientY-lastY;
   if(Math.abs(dx)+Math.abs(dy)>3) dragMoved=true;
-  /* look-around: pivot at the CAMERA (where you are), not at the focus point */
-  const f0=camForward();
-  const px=cam.target[0]-f0[0]*cam.dist, py=cam.target[1]-f0[1]*cam.dist, pz=cam.target[2]-f0[2]*cam.dist;
-  cam.yaw+=dx*0.006;
-  cam.pitch=Math.max(-1.1,Math.min(1.2,cam.pitch+dy*0.004));
-  const f1=camForward();
-  cam.target=[px+f1[0]*cam.dist, py+f1[1]*cam.dist, pz+f1[2]*cam.dist];
+  cam.x-=dx/cam.s;
+  cam.y-=dy/cam.s;
   lastX=e.clientX; lastY=e.clientY;
-  /* hover feedback on desktop */
   hoverNode=hitTest(e.clientX,e.clientY);
 });
 function endPointer(e){
   pointers.delete(e.pointerId);
-  if(pointers.size<2) pinchD=0;
+  if(pointers.size<2){ pinchD=0; pinchMid=null; }
   if(pointers.size===0){
     if(dragging && !dragMoved) handleTap(e.clientX,e.clientY);
     dragging=false;
@@ -701,21 +646,7 @@ canvas.addEventListener('pointerup',endPointer);
 canvas.addEventListener('pointercancel',endPointer);
 canvas.addEventListener('wheel',e=>{
   e.preventDefault();
-  if(e.deltaY<0){
-    zoomPt.x=e.clientX; zoomPt.y=e.clientY; zoomPt.t=performance.now();
-    const ray=screenRay(e.clientX,e.clientY);
-    if(cam.dist>FLY_DIST){
-      /* maps-style: keep the point under the cursor fixed while zooming toward it */
-      const k=Math.max(FLY_DIST/cam.dist, Math.exp(e.deltaY*0.0011));
-      const f=camForward();
-      const Pc=cam.target.map((v,i)=>v-f[i]*cam.dist+ray[i]*cam.dist);
-      cam.dist=cam.dist*k;
-      cam.target=cam.target.map((v,i)=>v+(Pc[i]-v)*(1-k));
-    } else flyMove(interceptRay(ray), flightBrake(Math.min(240,-e.deltaY)*0.4));   /* FLIGHT: fly toward the cursor */
-  } else {
-    lastZoomOutT=performance.now();
-    cam.dist=Math.min(760,cam.dist*Math.exp(e.deltaY*0.0011));
-  }
+  zoomAt(e.clientX,e.clientY,Math.exp(-e.deltaY*0.0013));
   lastInteract=performance.now();
 },{passive:false});
 window.addEventListener('pointermove',e=>{
@@ -724,23 +655,20 @@ window.addEventListener('pointermove',e=>{
 function hitTest(x,y){
   let best=null,bd=1e9;
   nodes.forEach(n=>{
-    if(n.kind==='ghost') return;
     if(n._sx===undefined) return;
     const d=Math.hypot(n._sx-x,n._sy-y);
-    if(d<Math.max(24,n._sr+12) && d<bd){ bd=d; best=n; }
+    if(d<Math.max(26,n._sr+14) && d<bd){ bd=d; best=n; }
   });
   return best;
 }
-/* tapping never opens a menu — it just floats you toward the thing you tapped.
-   Getting close is what turns a bubble into its lesson. */
 const treeHintEl=document.getElementById('treeHint');
 let hintFlashT=null;
 function flashHint(msg,ms){
   treeHintEl.innerHTML=msg;
   clearTimeout(hintFlashT);
-  hintFlashT=setTimeout(()=>{ treeHintEl.innerHTML='Drag to look around 🌀 · Zoom to <b>fly</b> 🚀 · Fly into a bubble and it becomes the lesson!'; },ms||3500);
+  hintFlashT=setTimeout(()=>{ treeHintEl.innerHTML='Drag to glide around 🗺️ · Zoom into a lesson bubble and it opens!'; },ms||3500);
 }
-document.getElementById('homeBtn').addEventListener('click',()=>{ S.pop(); flyTo(HOME.target,HOME.dist,null,900); });
+document.getElementById('homeBtn').addEventListener('click',()=>{ S.pop(); goHome(900); });
 function hideCard(){ selectedNode=null; }
 function handleTap(x,y){
   const n=hitTest(x,y);
@@ -748,15 +676,16 @@ function handleTap(x,y){
   selectedNode=n;
   S.pop();
   if(n.kind==='chapter'||n.kind==='bridge'){
-    flashHint('✨ Flying into <b>'+n.label+'</b>…');
-    flyTo(n.pos,58,null,1050,null,n);
+    flashHint('✨ Opening <b>'+n.label+'</b>…');
+    flyTo(n.pos[0],n.pos[1],(OPEN_R_FULL+12)/n.r,950,null,n);
   } else if(n.kind==='topic'){
     flashHint(n.emoji+' <b>Chapter '+n.topic.chNum+': '+n.topic.label+'</b> — '+n.topic.desc);
-    speak('Chapter '+n.topic.chNum+': '+n.topic.label+'. '+n.topic.desc+' Float into one of the numbered bubbles around it!');
-    flyTo(n.pos.map((v,i)=>i===1?v+14:v),320,null,800);
+    speak('Chapter '+n.topic.chNum+': '+n.topic.label+'. '+n.topic.desc+' Zoom into one of the lesson bubbles around it!');
+    const fit=Math.min(W,H)*0.40/(n.topic.ringR+120);
+    flyTo(n.pos[0],n.pos[1],fit,850);
   } else if(n.kind==='root'){
-    flashHint('🌱 The MATH web — everything grows from adding!');
-    flyTo(HOME.target,HOME.dist,null,800);
+    flashHint('🌱 The MATH map — everything grows from adding!');
+    goHome(850);
   } else {
     flashHint('🔬 <b>Science</b> is growing soon — see the golden threads already connecting it to math!');
     speak('Science lessons are growing soon! The golden threads show where math and science already hold hands.');
@@ -868,8 +797,7 @@ function closeLesson(){
   lessonScreen.classList.remove('show');
   treeActive=true;
   hideCard();
-  flyForward(-200);                   /* step back from the bubble you were inside */
-  cam.dist=Math.max(cam.dist,320);    /* and pull the view out so it doesn't instantly re-open */
+  cam.s=Math.min(cam.s,1.0);          /* zoom back out so the bubble doesn't instantly re-open */
   updateStarHud();
   requestAnimationFrame(drawTree);
 }
@@ -1081,6 +1009,7 @@ document.getElementById('celebTreeBtn').addEventListener('click',()=>{
 /* ================================================================
    LESSON CONTENT
 ================================================================ */
+let quizStage=null;   /* shared Try-It quiz builder — assigned in the chapter-3 block, used by all chapters */
 /* ---------------- ADD & SUBTRACT ---------------- */
 (function(){
 const TXT={ 'font-family':'Baloo 2','font-weight':800 };
@@ -1387,7 +1316,7 @@ build(scene,api){
   function drawCoins(){
     coinG.innerHTML='';
     for(let i=0;i<coins;i++){
-      E('text',{x:170+(i%10)*62,y:460,'font-size':40,'text-anchor':'middle',text:'🪙'},coinG);
+      E('text',{x:170+(i%10)*62,y:460-Math.floor(i/10)*42,'font-size':40,'text-anchor':'middle',text:'🪙'},coinG);
     }
   }
   drawCoins();
@@ -1465,12 +1394,12 @@ build(scene,api){
   let r=0,b=0;
   function draw(){
     blocksG.innerHTML='';
-    for(let i=0;i<r;i++) E('rect',{x:250,y:400-i*24,width:60,height:20,rx:5,fill:'var(--car)',stroke:'#fff','stroke-width':2},blocksG);
-    for(let i=0;i<b;i++) E('rect',{x:590,y:400-i*24,width:60,height:20,rx:5,fill:'var(--blue)',stroke:'#fff','stroke-width':2},blocksG);
+    for(let i=0;i<r;i++) E('rect',{x:250,y:400-i*20,width:60,height:16,rx:5,fill:'var(--car)',stroke:'#fff','stroke-width':2},blocksG);
+    for(let i=0;i<b;i++) E('rect',{x:590,y:400-i*20,width:60,height:16,rx:5,fill:'var(--blue)',stroke:'#fff','stroke-width':2},blocksG);
     const hi=Math.max(r,b), lo=Math.min(r,b);
     if(hi>lo){
       const x=r>b?250:590;
-      E('rect',{x:x-8,y:400-(hi-1)*24-4,width:76,height:(hi-lo)*24+4,rx:8,fill:'none',stroke:'#FFE94A','stroke-width':4,'stroke-dasharray':'8 6'},blocksG);
+      E('rect',{x:x-8,y:400-(hi-1)*20-4,width:76,height:(hi-lo)*20+4,rx:8,fill:'none',stroke:'#FFE94A','stroke-width':4,'stroke-dasharray':'8 6'},blocksG);
     }
     rScore.textContent=r; bScore.textContent=b;
     if(r===b){ diffT.textContent='Tied! '+r+' − '+b+' = 0'; }
@@ -1499,7 +1428,7 @@ function wrapText(g,txt,cx,y0,size,maxChars){
 }
 function shuffle(a){ return a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(p=>p[1]); }
 /* ---- generic Try It quiz stage ---- */
-function quizStage(secNum,questions){
+quizStage=function(secNum,questions){
 return {
 kid:'Try It '+secNum+'! ⭐',
 closer:'Tap the answer you think is right — wrong guesses are how brains grow! Tap 🧑‍🏫 any time to hear the question read aloud, or ❓ to ask about the idea.',
@@ -1545,7 +1474,7 @@ build(scene,api){
   renderQ();
 }
 };
-}
+};
 /* ---- 3.1 stage: the equals sign is a balance (VISUAL 3.2) ---- */
 const st_balance={
 kid:'The <span style="color:var(--fuel)">=</span> sign is a balance, not "the answer goes here"!',
@@ -2517,20 +2446,113 @@ build(scene,api){
   });
 }
 }];
+/* ---- 4.1 stage: skip counting (slows the pace down) ---- */
+const st_skip={
+kid:'Multiplying is <span style="color:var(--blue)">skip-counting</span> in equal jumps!',
+closer:'3, 6, 9, 12… every jump adds another 3. After n jumps you always land on n × 3 — the times tables are just the landing spots! Count along out loud as the kangaroo jumps.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'var(--sky)'},scene);
+  E('rect',{y:330,width:900,height:150,fill:'var(--grass)'},scene);
+  E('line',{x1:60,y1:330,x2:840,y2:330,stroke:'var(--ink)','stroke-width':6,'stroke-linecap':'round'},scene);
+  for(let v=0;v<=30;v+=3){
+    const x=60+v/30*780;
+    E('line',{x1:x,y1:318,x2:x,y2:342,stroke:'var(--ink)','stroke-width':5},scene);
+    label(scene,x,378,24,'#2c5c38',v);
+  }
+  const eq=label(scene,450,70,46,'var(--ink)','0 jumps × 3 = 0');
+  const roo=E('text',{x:60,y:305,'font-size':60,'text-anchor':'middle',text:'🦘'},scene);
+  const arcsG=E('g',{},scene);
+  let jumps=0,anim=null;
+  function reset(){ jumps=0; anim=null; arcsG.innerHTML=''; roo.setAttribute('x',60); roo.setAttribute('y',305);
+    eq.textContent='0 jumps × 3 = 0'; }
+  const jb=api.button('🦘 Jump +3!','go'), rs=api.button('🔄','ghost');
+  rs.addEventListener('click',()=>{ S.pop(); reset();
+    api.setKid('Multiplying is <span style="color:var(--blue)">skip-counting</span> in equal jumps!'); });
+  jb.addEventListener('click',()=>{
+    if(anim) return;
+    if(jumps>=10){ S.thud(); return; }
+    const v0=jumps*3, v1=v0+3;
+    const x0=60+v0/30*780, x1=60+v1/30*780, t0=performance.now();
+    jumps++; S.pop();
+    E('path',{d:'M '+x0+' 322 Q '+((x0+x1)/2)+' 250 '+x1+' 322',fill:'none',stroke:'var(--blue)','stroke-width':5,'stroke-dasharray':'8 6'},arcsG);
+    anim={x0:x0,x1:x1,t0:t0};
+    api.onUpdate(()=>{
+      if(!anim) return;
+      const u=Math.min(1,(performance.now()-anim.t0)/400);
+      roo.setAttribute('x',anim.x0+(anim.x1-anim.x0)*u);
+      roo.setAttribute('y',305-Math.sin(u*Math.PI)*66);
+      if(u>=1){ anim=null;
+        eq.textContent=jumps+' jump'+(jumps>1?'s':'')+' × 3 = '+(jumps*3);
+        api.setKid(jumps+' jumps of 3 landed on <span style="color:var(--blue)">'+(jumps*3)+'</span>'+(jumps>=4?' — you\'re reading the 3-times table!':'!'));
+        if(jumps===10){ S.tada(); }
+      }
+    });
+  });
+}
+};
+/* ---- 4.2 stage: division = subtracting groups ---- */
+const st_remain={
+kid:'Dividing = <span style="color:var(--boom)">scooping out groups</span> until you can\'t!',
+closer:'13 cookies, scoop groups of 4: one group… two… three… now only 1 cookie is left — too few for another group! 13 ÷ 4 = 3 groups, remainder 1. Division is just repeated subtraction with a fancy name.',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#FFF3E0'},scene);
+  const eq=label(scene,450,60,44,'var(--ink)','13 cookies, groups of 4');
+  const G=E('g',{},scene);
+  let taken=0;
+  function draw(){
+    G.innerHTML='';
+    const left=13-taken*4;
+    for(let i=0;i<left;i++)
+      E('text',{x:170+(i%7)*90,y:170+Math.floor(i/7)*80,'font-size':50,'text-anchor':'middle',text:'🍪'},G);
+    for(let g=0;g<taken;g++){
+      E('rect',{x:120+g*230,y:330,width:196,height:88,rx:16,fill:'#fff',stroke:'var(--blue)','stroke-width':5},G);
+      for(let i=0;i<4;i++)
+        E('text',{x:150+g*230+i*46,y:388,'font-size':36,'text-anchor':'middle',text:'🍪'},G);
+      label(G,218+g*230,320,20,'#33689c','group '+(g+1));
+    }
+  }
+  draw();
+  const sb=api.button('🥄 Scoop a group of 4!','blue'), rs=api.button('🔄','ghost');
+  rs.addEventListener('click',()=>{ taken=0; S.pop(); draw(); eq.textContent='13 cookies, groups of 4';
+    api.setKid('Dividing = <span style="color:var(--boom)">scooping out groups</span> until you can\'t!'); });
+  sb.addEventListener('click',()=>{
+    const left=13-taken*4;
+    if(left<4){ S.thud();
+      api.setKid('Only '+left+' left — not enough for a group! That\'s the <span style="color:var(--boom)">remainder</span>.');
+      return; }
+    taken++; S.pop(); draw();
+    const nl=13-taken*4;
+    eq.textContent='13 − '+(taken*4)+' taken = '+nl+' left';
+    if(nl<4){ S.ding(); eq.textContent='13 ÷ 4 = '+taken+' R'+nl;
+      api.setKid(taken+' full groups and <span style="color:var(--boom)">'+nl+' left over</span>: 13 ÷ 4 = '+taken+' R'+nl+'!'); }
+    else api.setKid('Group '+taken+' scooped! '+nl+' cookies still waiting…');
+  });
+}
+};
 registerLesson('muldiv',[
-{stages:M_num, qa:[
+{stages:[M_num[0], st_skip, M_num[1], quizStage('4.1',[
+  {q:'5 jumps of 3 lands on…?',choices:[12,15,18],a:15,why:'5 × 3 = 15 — skip-count: 3,6,9,12,15!'},
+  {q:'3 × 4 is the same as…?',choices:['4 + 4 + 4','3 + 3','4 × 4'],a:'4 + 4 + 4',why:'Three groups of four — speedy adding!'},
+  {q:'6 rows of 2 stars = ?',choices:[8,12,14],a:12,why:'6 × 2 = 12 — and 2 × 6 too!'}
+])], qa:[
   {q:'Is multiplying really just adding?', a:'Yes! Three times four means four plus four plus four. Multiplying is a shortcut for adding the same number again and again — it gets you there in one jump instead of many little hops.'},
-  {q:'Why doesn\'t flipping change the answer?', a:'Look at the rectangle of stars and tilt your head! Three rows of five and five rows of three are the very same rectangle turned sideways. The stars never left, so the count cannot change. That works for every pair of numbers.'},
-  {q:'What if sharing doesn\'t come out even?', a:'The extras are called the remainder. Twelve strawberries for five friends: everyone gets two, and two are left over. The remainder is never bigger than the number of friends — otherwise you could deal another round!'}
+  {q:'Why doesn\'t flipping change the answer?', a:'Look at the rectangle of stars and tilt your head! Three rows of five and five rows of three are the very same rectangle turned sideways. The stars never left, so the count cannot change.'}
+]},
+{stages:[M_num[2], st_remain, quizStage('4.2',[
+  {q:'10 cookies, groups of 3: how many groups, how many left?',choices:['3 groups, 1 left','2 groups, 4 left','3 groups, none left'],a:'3 groups, 1 left',why:'3+3+3 = 9, and 1 cookie stays with the chef!'},
+  {q:'12 ÷ 4 = ?',choices:[3,4,6],a:3,why:'Three scoops of 4 empties the plate exactly.'},
+  {q:'9 candies shared by 2 friends?',choices:['4 each, 1 left','5 each','3 each'],a:'4 each, 1 left',why:'Fair shares of 4 — the last one is the remainder!'}
+])], qa:[
+  {q:'What if sharing doesn\'t come out even?', a:'The extras are called the remainder. Twelve strawberries for five friends: everyone gets two, and two are left over. The remainder is never bigger than the number of friends — otherwise you could deal another round!'},
+  {q:'What makes a share "fair"?', a:'Fair means everyone gets exactly the same amount — and that is precisely what dividing promises. Eight slices for four friends is two each, no arguments at the table.'}
 ]},
 {stages:M_graph, qa:[
   {q:'Why does multiplying tilt the line?', a:'Because the jump gets bigger with every step. Times two means one step across climbs two up, two across climbs four up. Compare that with adding, which only LIFTS the line without changing its tilt.'},
-  {q:'Who wins, plus two or times two?', a:'At the start, plus two is ahead — it gets a free head start. But times two grows WITH x, so it catches up at two and then runs away forever. Multiplying beats adding in the long run.'},
+  {q:'Who wins, plus two or times two?', a:'At the start, plus two is ahead — it gets a free head start. But times two grows WITH x, so it catches up and then runs away forever. Multiplying beats adding in the long run.'},
   {q:'What does dividing look like?', a:'A gentle ramp. Divide by two and you need TWO steps across to climb one step up. Dividing is multiplying\'s opposite, so it un-tilts exactly what multiplying tilted.'}
 ]},
 {stages:M_world, qa:[
   {q:'Why count cars instead of wheels?', a:'Because every car carries the SAME number of wheels — four. When groups are all the same size, one multiplication replaces lots of counting: five cars, times four, twenty wheels. Done!'},
-  {q:'What makes a share "fair"?', a:'Fair means everyone gets exactly the same amount — and that is precisely what dividing promises. Eight slices for four friends is two each, no arguments at the table.'},
   {q:'How is multiplying a time machine?', a:'If the same thing happens every week — like saving three coins — you don\'t have to wait and count week by week. Six weeks, times three coins, is eighteen. Multiplication skips you straight to the future total.'}
 ]}]);
 })();
@@ -2611,6 +2633,7 @@ kid:'Square root asks: <span style="color:var(--go)">what was the side?</span>',
 closer:'√ (the square root) walks backwards: you know the square has 25 blocks, √25 finds the side — 5. Squaring and square-rooting undo each other, just like + and −, and × and ÷!',
 build(scene,api){
   E('rect',{width:900,height:480,fill:'#EFF7EC'},scene);
+  let alive=true; api.onCleanup(()=>{ alive=false; });
   const puzzles=[16,25,36,49];
   let pi=0, area=puzzles[0];
   const eq=label(scene,450,60,46,'var(--ink)','√16 = ?');
@@ -2637,6 +2660,7 @@ build(scene,api){
           S.ding(); eq.textContent='√'+area+' = '+side;
           api.setKid('Yes! √'+area+' = <span style="color:var(--go)">'+side+'</span>, because '+side+' × '+side+' = '+area+'!');
           setTimeout(()=>{
+            if(!alive) return;
             pi=(pi+1)%puzzles.length; area=puzzles[pi];
             drawSquare(); makeGuesses();
             api.setKid('Next garden! Square root asks: <span style="color:var(--go)">what was the side?</span>');
@@ -2841,11 +2865,112 @@ build(scene,api){
   });
 }
 }];
+/* ---- 5.1 stage: powers of ten (slows the pace down) ---- */
+const st_pow10={
+kid:'Powers of ten: the little number <span style="color:var(--fuel)">counts the zeros!</span>',
+closer:'10¹ = 10, 10² = 100, 10³ = 1,000… each step multiplies by ten more, and each step adds exactly one zero. That\'s why exponents and zeros are best friends — 10⁵ has five zeros!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#EFF7EC'},scene);
+  const sups=['⁰','¹','²','³','⁴','⁵'];
+  const names=['1 — one lonely ant 🐜','10 — a line of ants','100 — a whole flowerbox 🌼','1,000 — a school of kids 🏫','10,000 — a small stadium 🏟️','100,000 — a little city 🏙️'];
+  const eq=label(scene,450,64,50,'var(--ink)','10¹ = 10');
+  const nm=label(scene,450,112,26,'#4b6a52',names[1]);
+  const G=E('g',{},scene);
+  let n=1;
+  function draw(){
+    G.innerHTML='';
+    const count=Math.pow(10,n);
+    if(n===0){ E('circle',{cx:450,cy:280,r:16,fill:'var(--fuel)',stroke:'var(--ink)','stroke-width':4},G); }
+    else if(n===1){ for(let i=0;i<10;i++) E('circle',{cx:230+i*50,cy:280,r:14,fill:'var(--fuel)',stroke:'var(--ink)','stroke-width':3},G); }
+    else if(n===2){ for(let r=0;r<10;r++)for(let c=0;c<10;c++) E('circle',{cx:320+c*29,cy:170+r*24,r:8,fill:'var(--fuel)',stroke:'var(--ink)','stroke-width':1.5},G); }
+    else {
+      const blocks=Math.pow(10,n-2);
+      const show=Math.min(blocks,30);
+      const cols=Math.min(show,10);
+      for(let i=0;i<show;i++){
+        const bx=450+((i%cols)-cols/2)*33+3, by=170+Math.floor(i/cols)*40;
+        E('rect',{x:bx,y:by,width:26,height:30,rx:4,fill:'#F5C043',stroke:'var(--ink)','stroke-width':2},G);
+        label(G,bx+13,by+20,10,'#7a4c00','100');
+      }
+      if(blocks>30) label(G,450,330,26,'#7a4c00','…'+blocks.toLocaleString()+' blocks of 100!');
+      else label(G,450,330,24,'#7a4c00',blocks+' blocks of one hundred');
+    }
+    eq.textContent='10'+sups[n]+' = '+count.toLocaleString();
+    nm.textContent=names[n];
+    /* zero counter */
+    label(G,450,420,28,'#b8860b',(n===0?'no zeros — just 1!':n+' zero'+(n>1?'s':'')+' — same as the little number!'));
+  }
+  draw();
+  const sl=api.slider(0,5,1);
+  const lbl=api.button('10¹','ghost'); lbl.style.pointerEvents='none';
+  sl.addEventListener('input',()=>{
+    n=+sl.value; lbl.textContent='10'+sups[n]; S.whir(); draw();
+    api.setKid('10'+sups[n]+' = <span style="color:var(--fuel)">'+Math.pow(10,n).toLocaleString()+'</span> — '+(n===0?'zero steps, still 1!':n+' steps of ×10, '+n+' zero'+(n>1?'s':'')+'!'));
+    if(n===5) S.tada();
+  });
+}
+};
+/* ---- 5.2 stage: trapping square roots between squares ---- */
+const st_between={
+kid:'No perfect square? <span style="color:var(--go)">Trap the root</span> between two!',
+closer:'√20 isn\'t a whole number — but 20 sits between 16 (4²) and 25 (5²), so √20 must be between 4 and 5. Trapping answers between two known ones is a real mathematician\'s move!',
+build(scene,api){
+  E('rect',{width:900,height:480,fill:'#EFF7EC'},scene);
+  E('line',{x1:60,y1:300,x2:860,y2:300,stroke:'var(--ink)','stroke-width':6,'stroke-linecap':'round'},scene);
+  const squares=[1,4,9,16,25,36];
+  squares.forEach((v,i)=>{
+    const x=60+v/36*780;
+    E('line',{x1:x,y1:286,x2:x,y2:314,stroke:'var(--go-dark)','stroke-width':5},scene);
+    label(scene,x,345,22,'#2c5c38',v);
+    label(scene,x,266,20,'var(--go-dark)',(i+1)+'²');
+    E('text',{x:x,y:240,'font-size':22,'text-anchor':'middle',text:'🚩'},scene);
+  });
+  const eq=label(scene,450,64,44,'var(--ink)','√20 is between 4 and 5');
+  const approx=label(scene,450,110,28,'#4b6a52','(really ≈ 4.47)');
+  const zone=E('rect',{x:0,y:282,width:0,height:36,rx:8,fill:'rgba(255,233,74,.45)',stroke:'#c8a600','stroke-width':3},scene);
+  const marker=E('text',{x:0,y:405,'font-size':40,'text-anchor':'middle',text:'📍'},scene);
+  const mLbl=label(scene,0,445,24,'#b34e00','20');
+  function setN(N){
+    const x=60+N/36*780;
+    marker.setAttribute('x',x); mLbl.setAttribute('x',x); mLbl.textContent=N;
+    const r=Math.floor(Math.sqrt(N));
+    const isPerfect=r*r===N;
+    const x0=60+(r*r)/36*780, x1=60+Math.min(36,(r+1)*(r+1))/36*780;
+    if(isPerfect){
+      zone.setAttribute('x',x-8); zone.setAttribute('width',16);
+      eq.textContent='√'+N+' = '+r+' exactly!';
+      approx.textContent='a perfect square! 🎉';
+      api.setKid(N+' IS a perfect square: √'+N+' = <span style="color:var(--go)">'+r+'</span>!');
+      S.ding();
+    } else {
+      zone.setAttribute('x',x0); zone.setAttribute('width',x1-x0);
+      eq.textContent='√'+N+' is between '+r+' and '+(r+1);
+      approx.textContent='(really ≈ '+Math.sqrt(N).toFixed(2)+')';
+      api.setKid(N+' sits between '+(r*r)+' and '+((r+1)*(r+1))+', so √'+N+' is trapped between <span style="color:var(--go)">'+r+' and '+(r+1)+'</span>!');
+      S.whir();
+    }
+  }
+  setN(20);
+  const sl=api.slider(2,36,20);
+  sl.addEventListener('input',()=>setN(+sl.value));
+}
+};
 registerLesson('exproot',[
-{stages:X_num, qa:[
+{stages:[X_num[0], X_num[1], st_pow10, quizStage('5.1',[
+  {q:'2⁴ = ? (careful — NOT 2 × 4!)',choices:[8,16,24],a:16,why:'2 × 2 × 2 × 2 = 16 — the little number counts the multiplies.'},
+  {q:'How many zeros does 10³ have?',choices:[2,3,4],a:3,why:'10³ = 1,000 — three steps, three zeros!'},
+  {q:'5² means…?',choices:['5 × 5','5 × 2','5 + 5'],a:'5 × 5',why:'Squared = times itself. 5² = 25!'}
+])], qa:[
   {q:'What does the little floating number mean?', a:'It counts how many times you multiply. Two to the fourth means two times two times two times two. It is NOT two times four — that trap catches almost everyone once!'},
-  {q:'Why is it called "squared"?', a:'Because a number times itself literally builds a square! Four rows of four blocks make a perfect square shape with sixteen blocks. The name comes straight from the picture.'},
-  {q:'What does the square root do?', a:'It walks backwards. Squaring turns the side into the area; the square root turns the area back into the side. Root twenty-five asks: which number, times itself, makes twenty-five? Five!'}
+  {q:'Why is it called "squared"?', a:'Because a number times itself literally builds a square! Four rows of four blocks make a perfect square shape with sixteen blocks. The name comes straight from the picture.'}
+]},
+{stages:[X_num[2], st_between, quizStage('5.2',[
+  {q:'√36 = ?',choices:[5,6,7],a:6,why:'6 × 6 = 36 — the side of the 36-block square.'},
+  {q:'√20 is between which neighbors?',choices:['4 and 5','2 and 3','10 and 11'],a:'4 and 5',why:'16 < 20 < 25, so the root is trapped between 4 and 5.'},
+  {q:'7² = 49. So √49 = ?',choices:[6,7,8],a:7,why:'Squaring and rooting undo each other!'}
+])], qa:[
+  {q:'What does the square root do?', a:'It walks backwards. Squaring turns the side into the area; the square root turns the area back into the side. Root twenty-five asks: which number, times itself, makes twenty-five? Five!'},
+  {q:'What if the number isn\'t a perfect square?', a:'Trap it! Twenty sits between sixteen and twenty-five, so its root sits between four and five. Calculators give the decimal, but the trap tells you it makes sense.'}
 ]},
 {stages:X_graph, qa:[
   {q:'Why does x squared curve upward?', a:'Because each step gains MORE than the step before — first one more, then three more, then five more, then seven. Growing gains bend the path upward into the curve called a parabola.'},
@@ -2854,8 +2979,7 @@ registerLesson('exproot',[
 ]},
 {stages:X_world, qa:[
   {q:'Why can nobody fold paper 8 times?', a:'Each fold DOUBLES the thickness. Seven folds is already one hundred twenty-eight layers — stiffer than a book cover! And if you somehow folded forty-two times, the stack would reach the Moon. Doubling hides enormous power.'},
-  {q:'Where else does doubling happen?', a:'Germs splitting, rumors spreading, money earning interest, populations growing. Anything that multiplies itself grows exponentially — slow-looking at first, then suddenly huge.'},
-  {q:'How do builders use square roots?', a:'Backwards from the tiles! If a square floor needs thirty-six tiles, the builder takes the square root and knows each wall is six tiles long. Roots turn areas back into lengths.'}
+  {q:'Where else does doubling happen?', a:'Germs splitting, rumors spreading, money earning interest, populations growing. Anything that multiplies itself grows exponentially — slow-looking at first, then suddenly huge.'}
 ]}]);
 })();
 /* ---------------- DERIVATIVES & INTEGRALS ---------------- */
@@ -3217,11 +3341,61 @@ build(scene,api){
   });
 }
 }];
+/* ---- 6.1 stage: average speed sneaks up on right-now speed (secant → tangent) ---- */
+const st_secant={
+kid:'Shrink the gap — <span style="color:var(--car)">average</span> becomes <span style="color:var(--go)">right now!</span>',
+closer:'The orange line measures AVERAGE steepness between two points on the hill. Slide them closer and closer… the average sneaks up on the steepness at ONE point. Mathematicians call this sneaking-up a <b>limit</b> — and it\'s the exact idea behind every derivative.',
+build(scene,api){
+  const G=api.graph({x:190,y:40,w:560,h:380,xmin:0,xmax:10,ymin:0,ymax:10,xlabel:'walk →',ylabel:'height'});
+  const f=x=>8-Math.pow(x-5,2)/3.2;
+  const curve=G.path(f,{stroke:'var(--go)','stroke-width':7},0.5,9.5);
+  api.drawIn(curve,800);
+  const a=3;
+  const dotA=E('circle',{cx:G.X(a),cy:G.Y(f(a)),r:11,fill:'var(--spark)',stroke:'var(--ink)','stroke-width':4},scene);
+  const dotB=E('circle',{cx:0,cy:0,r:11,fill:'var(--boom)',stroke:'var(--ink)','stroke-width':4},scene);
+  const sec=E('line',{stroke:'var(--fuel)','stroke-width':6,'stroke-linecap':'round'},scene);
+  const tag=label(scene,450,24,26,'#b34e00','');
+  let celebrated=false;
+  function setH(h){
+    const b=a+h;
+    const m=(f(b)-f(a))/h;
+    const dxw=2.2;
+    sec.setAttribute('x1',G.X(a-dxw)); sec.setAttribute('y1',G.Y(f(a)-m*dxw));
+    sec.setAttribute('x2',G.X(b+dxw)); sec.setAttribute('y2',G.Y(f(b)+m*dxw));
+    dotB.setAttribute('cx',G.X(b)); dotB.setAttribute('cy',G.Y(f(b)));
+    const mv=Math.round(m*100)/100;
+    tag.textContent='gap = '+h.toFixed(1)+'  →  average slope = '+mv;
+    if(h<=0.31){
+      tag.setAttribute('fill','var(--go-dark)');
+      api.setKid('Gap almost <b>zero</b>: average slope '+mv+' ≈ the <span style="color:var(--go)">right-now slope</span> at the yellow dot!');
+      if(!celebrated){ celebrated=true; S.tada(); }
+    } else {
+      tag.setAttribute('fill','#b34e00');
+      api.setKid('Two points, gap '+h.toFixed(1)+': the orange line is the <span style="color:var(--car)">average</span> between them. Shrink it!');
+    }
+  }
+  setH(4);
+  const sl=api.slider(0.3,4,4,0.1);
+  const lbl=api.button('gap = 4','ghost'); lbl.style.pointerEvents='none';
+  sl.addEventListener('input',()=>{ const h=+sl.value; lbl.textContent='gap = '+h.toFixed(1); S.whir(); setH(h); });
+}
+};
 registerLesson('calc',[
-{stages:C_num, qa:[
+{stages:[C_num[0], st_secant, quizStage('6.1',[
+  {q:'Slope 0 at a spot means…?',choices:['flat right there','going up','falling fast'],a:'flat right there',why:'The very top of a hill is flat for one instant!'},
+  {q:'The speedometer shows…?',choices:['right-now speed','total distance','yesterday\'s speed'],a:'right-now speed',why:'A live derivative — how fast position changes THIS moment.'},
+  {q:'Shrinking the gap between two points makes the average slope…?',choices:['sneak up on the right-now slope','disappear','get steeper forever'],a:'sneak up on the right-now slope',why:'That sneaking-up is called a limit — the heart of calculus!'}
+])], qa:[
   {q:'What IS a derivative, really?', a:'It is the answer to "how fast is this changing right now?" The steepness of the hill under your feet, the speed on the dial this second. Not the total, not the past — the rate of change at this very moment.'},
+  {q:'What is a limit?', a:'A sneak-up! You cannot divide by a gap of zero, but you can shrink the gap smaller and smaller and watch the answer settle down. The number it settles on is the limit — and that settled number is the derivative.'}
+]},
+{stages:[C_num[1], C_num[2], quizStage('6.2',[
+  {q:'The odometer in a car…?',choices:['adds up every bit of road','shows right-now speed','counts the wheels'],a:'adds up every bit of road',why:'A patient integral — tiny pieces, one giant total.'},
+  {q:'A total built from zillions of tiny pieces is called…?',choices:['an integral','a derivative','a remainder'],a:'an integral',why:'Raindrops → bucket. Steps → height. Pieces → whole!'},
+  {q:'Each stair step is +20 high. After 4 steps, total height?',choices:[60,80,100],a:80,why:'4 × 20 = 80 — the integral of equal steps is just multiplying!'}
+])], qa:[
   {q:'What IS an integral, really?', a:'It is the answer to "how much has piled up in total?" Add up every raindrop, every tiny step, every little bit — the integral is the grand total that all the tiny pieces build.'},
-  {q:'Why are they opposites?', a:'Look at the staircase both ways. The size of each step is the derivative. The height you have climbed is the integral. If you know every step, you can find the height — and if you watch the height, you can find each step. Each one undoes the other.'}
+  {q:'Why are derivative and integral opposites?', a:'Look at the staircase both ways. The size of each step is the derivative. The height you have climbed is the integral. If you know every step you can find the height, and if you watch the height you can find each step.'}
 ]},
 {stages:C_graph, qa:[
   {q:'What is a tangent line?', a:'A straight line that just kisses the curve at one single point, leaning exactly the way the curve leans right there. Its tilt IS the derivative at that point — a tiny steepness ruler.'},
@@ -3230,8 +3404,7 @@ registerLesson('calc',[
 ]},
 {stages:C_world, qa:[
   {q:'Does my car really do calculus?', a:'It truly does! The speedometer measures how fast your position is changing right now — a live derivative. The odometer adds up every little bit of road forever — a patient integral. Two dials, two halves of calculus.'},
-  {q:'What if the speed keeps changing?', a:'No problem — the odometer never asks the speed to hold still. It just keeps adding whatever tiny bit of road each moment brings. Fast moments add big bits, slow moments add small ones.'},
-  {q:'Where else does this show up?', a:'Your heart: beats per minute is a rate, total heartbeats is an integral. Rain: how hard it falls versus how full the bucket gets. Your phone battery: how fast it drains versus how much is left. Change and total — they are everywhere, always in pairs.'}
+  {q:'Where else does this show up?', a:'Your heart: beats per minute is a rate, total heartbeats is an integral. Rain: how hard it falls versus how full the bucket gets. Your phone battery: how fast it drains versus how much is left. Change and total — always in pairs.'}
 ]}]);
 })();
 /* ================================================================

@@ -1,1 +1,1 @@
-Our Learning Web — build v6 (zoom-to-cursor)
+Our Learning Web — build v7 (2D map, topic labels, expanded chapters 4-6, bug fixes)
